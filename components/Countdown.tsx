@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Clock } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { PopeEvent } from '@/types';
 import { getSecondsUntil, formatTime, formatEventDateShort } from '@/lib/utils';
@@ -18,33 +19,52 @@ export default function Countdown({ event }: CountdownProps) {
     return () => clearInterval(interval);
   }, [event]);
 
-  const hours = Math.floor(seconds / 3600);
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
 
+  const units = days > 0
+    ? [
+        { value: days, label: 'DAYS' },
+        { value: hours, label: 'HRS' },
+        { value: mins, label: 'MIN' },
+      ]
+    : [
+        { value: hours, label: 'HRS' },
+        { value: mins, label: 'MIN' },
+        { value: secs, label: 'SEC' },
+      ];
+
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>NEXT EVENT</Text>
-      <View style={styles.timerRow}>
-        <View style={styles.timerUnit}>
-          <Text style={styles.timerValue}>{String(hours).padStart(2, '0')}</Text>
-          <Text style={styles.timerLabel}>HRS</Text>
-        </View>
-        <Text style={styles.colon}>:</Text>
-        <View style={styles.timerUnit}>
-          <Text style={styles.timerValue}>{String(mins).padStart(2, '0')}</Text>
-          <Text style={styles.timerLabel}>MIN</Text>
-        </View>
-        <Text style={styles.colon}>:</Text>
-        <View style={styles.timerUnit}>
-          <Text style={styles.timerValue}>{String(secs).padStart(2, '0')}</Text>
-          <Text style={styles.timerLabel}>SEC</Text>
-        </View>
+      <View style={styles.labelRow}>
+        <Clock size={13} color={Colors.goldWarm} />
+        <Text style={styles.label}>NEXT EVENT</Text>
       </View>
-      <Text style={styles.eventName} numberOfLines={1}>{event.title}</Text>
-      <Text style={styles.eventMeta}>
-        {formatEventDateShort(event.date)} at {formatTime(event.time)} · {event.location}
-      </Text>
+
+      <View style={styles.timerRow}>
+        {units.map((unit, i) => (
+          <React.Fragment key={unit.label}>
+            {i > 0 && <Text style={styles.colon}>:</Text>}
+            <View style={styles.timerUnit}>
+              <View style={styles.timerValueBg}>
+                <Text style={styles.timerValue}>
+                  {String(unit.value).padStart(2, '0')}
+                </Text>
+              </View>
+              <Text style={styles.timerLabel}>{unit.label}</Text>
+            </View>
+          </React.Fragment>
+        ))}
+      </View>
+
+      <View style={styles.eventInfo}>
+        <Text style={styles.eventName} numberOfLines={1}>{event.title}</Text>
+        <Text style={styles.eventMeta}>
+          {formatEventDateShort(event.date)} at {formatTime(event.time)} · {event.location}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -52,59 +72,80 @@ export default function Countdown({ event }: CountdownProps) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.midnightCard,
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 24,
+    padding: 22,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.midnightBorder,
+    borderColor: Colors.midnightBorderLight,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 18,
   },
   label: {
-    color: Colors.whiteDim,
+    color: Colors.goldWarm,
     fontSize: 11,
     fontWeight: '700' as const,
-    letterSpacing: 2,
-    marginBottom: 14,
+    letterSpacing: 2.5,
   },
   timerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
+    alignItems: 'flex-start',
+    marginBottom: 20,
   },
   timerUnit: {
     alignItems: 'center',
-    minWidth: 56,
+    minWidth: 64,
+  },
+  timerValueBg: {
+    backgroundColor: 'rgba(212, 175, 55, 0.06)',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: Colors.goldBorder,
+    minWidth: 72,
+    alignItems: 'center',
   },
   timerValue: {
     color: Colors.gold,
-    fontSize: 40,
+    fontSize: 42,
     fontWeight: '200' as const,
     fontVariant: ['tabular-nums'],
-    letterSpacing: -1,
+    letterSpacing: -2,
+    lineHeight: 48,
   },
   timerLabel: {
     color: Colors.whiteDim,
-    fontSize: 10,
-    fontWeight: '600' as const,
-    letterSpacing: 1.5,
-    marginTop: 2,
+    fontSize: 9,
+    fontWeight: '700' as const,
+    letterSpacing: 2,
+    marginTop: 6,
   },
   colon: {
-    color: Colors.goldLight,
-    fontSize: 32,
+    color: Colors.goldWarm,
+    fontSize: 34,
     fontWeight: '200' as const,
-    marginHorizontal: 4,
-    marginBottom: 14,
+    marginHorizontal: 2,
+    marginTop: 10,
+    opacity: 0.5,
+  },
+  eventInfo: {
+    alignItems: 'center',
+    gap: 4,
   },
   eventName: {
     color: Colors.white,
     fontSize: 16,
     fontWeight: '600' as const,
-    textAlign: 'center',
+    textAlign: 'center' as const,
+    letterSpacing: -0.3,
   },
   eventMeta: {
     color: Colors.whiteMuted,
     fontSize: 13,
-    marginTop: 4,
-    textAlign: 'center',
+    textAlign: 'center' as const,
   },
 });

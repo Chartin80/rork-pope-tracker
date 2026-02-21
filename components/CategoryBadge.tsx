@@ -4,16 +4,17 @@ import { getCategoryColor, getCategoryLabel } from '@/lib/locations';
 
 interface CategoryBadgeProps {
   category: string;
+  compact?: boolean;
 }
 
-export default function CategoryBadge({ category }: CategoryBadgeProps) {
+export default function CategoryBadge({ category, compact }: CategoryBadgeProps) {
   const color = getCategoryColor(category);
   const label = getCategoryLabel(category);
 
   return (
-    <View style={[styles.badge, { backgroundColor: color + '20' }]}>
+    <View style={[styles.badge, { backgroundColor: color + '15', borderColor: color + '30' }, compact && styles.badgeCompact]}>
       <View style={[styles.dot, { backgroundColor: color }]} />
-      <Text style={[styles.label, { color }]}>{label}</Text>
+      <Text style={[styles.label, { color }, compact && styles.labelCompact]}>{label}</Text>
     </View>
   );
 }
@@ -23,19 +24,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 5,
+    paddingVertical: 5,
+    borderRadius: 20,
+    gap: 6,
     alignSelf: 'flex-start',
+    borderWidth: 1,
+  },
+  badgeCompact: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   label: {
     fontSize: 11,
     fontWeight: '600' as const,
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase' as const,
+  },
+  labelCompact: {
+    fontSize: 10,
   },
 });

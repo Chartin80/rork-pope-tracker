@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Share, Platform } from 'react-native';
+import React, { useMemo, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Share, Platform, Animated } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, MapPin, Clock, Share2, ExternalLink, CalendarPlus } from 'lucide-react-native';
@@ -38,6 +38,12 @@ export default function EventDetailScreen() {
     }
   };
 
+  const handleAddToCalendar = () => {
+    if (!event) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    console.log('Add to calendar:', event.id);
+  };
+
   if (!event) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -52,16 +58,19 @@ export default function EventDetailScreen() {
     );
   }
 
+  const firstLetter = event.description.charAt(0);
+  const restDescription = event.description.slice(1);
+
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
         <Pressable onPress={() => router.back()} style={styles.topBarButton} hitSlop={12}>
-          <ArrowLeft size={22} color={Colors.white} />
+          <ArrowLeft size={20} color={Colors.white} />
         </Pressable>
         <View style={styles.topBarActions}>
           <Pressable onPress={handleShare} style={styles.topBarButton} hitSlop={12}>
-            <Share2 size={20} color={Colors.white} />
+            <Share2 size={18} color={Colors.white} />
           </Pressable>
         </View>
       </View>
@@ -81,10 +90,11 @@ export default function EventDetailScreen() {
               <Clock size={16} color={Colors.gold} />
             </View>
             <View>
-              <Text style={styles.metaLabel}>Date & Time</Text>
+              <Text style={styles.metaLabel}>DATE & TIME</Text>
               <Text style={styles.metaValue}>
-                {formatEventDate(event.date)} at {formatTime(event.time)}
+                {formatEventDate(event.date)}
               </Text>
+              <Text style={styles.metaSubValue}>at {formatTime(event.time)}</Text>
             </View>
           </View>
 
@@ -94,8 +104,8 @@ export default function EventDetailScreen() {
             <View style={styles.metaIcon}>
               <MapPin size={16} color={Colors.gold} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.metaLabel}>Location</Text>
+            <View style={styles.metaTextWrap}>
+              <Text style={styles.metaLabel}>LOCATION</Text>
               <Text style={styles.metaValue}>{event.location}</Text>
               {event.locationDetail && (
                 <Text style={styles.metaSubValue}>{event.locationDetail}</Text>
@@ -106,21 +116,36 @@ export default function EventDetailScreen() {
 
         <View style={styles.actionsRow}>
           <Pressable
-            style={styles.actionButton}
+            style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
             onPress={handleMapsLink}
           >
-            <ExternalLink size={16} color={Colors.gold} />
-            <Text style={styles.actionText}>Open in Maps</Text>
+            <ExternalLink size={15} color={Colors.gold} />
+            <Text style={styles.actionText}>Maps</Text>
           </Pressable>
-          <Pressable style={styles.actionButton} onPress={handleShare}>
-            <Share2 size={16} color={Colors.gold} />
+          <Pressable
+            style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
+            onPress={handleAddToCalendar}
+          >
+            <CalendarPlus size={15} color={Colors.gold} />
+            <Text style={styles.actionText}>Calendar</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
+            onPress={handleShare}
+          >
+            <Share2 size={15} color={Colors.gold} />
             <Text style={styles.actionText}>Share</Text>
           </Pressable>
         </View>
 
         <View style={styles.descriptionSection}>
           <Text style={styles.descriptionLabel}>About this event</Text>
-          <Text style={styles.descriptionText}>{event.description}</Text>
+          <View style={styles.descriptionWrap}>
+            <Text style={styles.descriptionText}>
+              <Text style={styles.dropCap}>{firstLetter}</Text>
+              {restDescription}
+            </Text>
+          </View>
         </View>
 
         {event.isLive && (
@@ -129,6 +154,8 @@ export default function EventDetailScreen() {
             <Text style={styles.liveText}>This event is currently in progress</Text>
           </View>
         )}
+
+        <View style={styles.footerSpacer} />
       </ScrollView>
     </View>
   );
@@ -144,17 +171,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
     borderBottomColor: Colors.midnightBorder,
   },
   topBarButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: Colors.midnightCard,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.midnightBorder,
   },
   topBarActions: {
     flexDirection: 'row',
@@ -166,43 +195,48 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
-    gap: 16,
+    gap: 18,
   },
   title: {
     color: Colors.white,
     fontSize: 28,
     fontWeight: '700' as const,
-    letterSpacing: -0.5,
+    letterSpacing: -0.6,
     lineHeight: 34,
   },
   metaCard: {
     backgroundColor: Colors.midnightCard,
-    borderRadius: 18,
-    padding: 18,
+    borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
-    borderColor: Colors.midnightBorder,
-    gap: 14,
+    borderColor: Colors.midnightBorderLight,
+    gap: 16,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12,
+    gap: 14,
   },
   metaIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: Colors.goldMuted,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.goldBorder,
     marginTop: 2,
+  },
+  metaTextWrap: {
+    flex: 1,
   },
   metaLabel: {
     color: Colors.whiteDim,
-    fontSize: 12,
-    fontWeight: '500' as const,
-    letterSpacing: 0.3,
-    marginBottom: 2,
+    fontSize: 10,
+    fontWeight: '700' as const,
+    letterSpacing: 1.5,
+    marginBottom: 4,
   },
   metaValue: {
     color: Colors.white,
@@ -215,7 +249,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   metaDivider: {
-    height: StyleSheet.hairlineWidth,
+    height: 1,
     backgroundColor: Colors.midnightBorder,
   },
   actionsRow: {
@@ -228,46 +262,64 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.midnightCard,
-    borderRadius: 14,
+    borderRadius: 16,
     paddingVertical: 14,
     gap: 8,
     borderWidth: 1,
     borderColor: Colors.midnightBorder,
   },
+  actionButtonPressed: {
+    backgroundColor: Colors.midnightCardHover,
+    borderColor: Colors.goldBorder,
+  },
   actionText: {
     color: Colors.gold,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600' as const,
   },
   descriptionSection: {
-    gap: 10,
+    gap: 12,
   },
   descriptionLabel: {
     color: Colors.whiteSecondary,
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '700' as const,
+    letterSpacing: -0.3,
+  },
+  descriptionWrap: {
+    backgroundColor: Colors.midnightCard,
+    borderRadius: 18,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: Colors.midnightBorder,
   },
   descriptionText: {
     color: Colors.whiteMuted,
     fontSize: 15,
-    lineHeight: 24,
+    lineHeight: 26,
+  },
+  dropCap: {
+    color: Colors.gold,
+    fontSize: 32,
+    fontWeight: '700' as const,
+    lineHeight: 36,
   },
   liveBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(183, 28, 28, 0.15)',
-    borderRadius: 14,
-    paddingHorizontal: 16,
+    backgroundColor: Colors.crimsonGlow,
+    borderRadius: 16,
+    paddingHorizontal: 18,
     paddingVertical: 14,
     gap: 10,
     borderWidth: 1,
-    borderColor: 'rgba(183, 28, 28, 0.3)',
+    borderColor: 'rgba(183, 28, 28, 0.35)',
   },
   liveIndicator: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: Colors.crimson,
+    backgroundColor: Colors.crimsonLight,
   },
   liveText: {
     color: Colors.crimsonLight,
@@ -286,12 +338,18 @@ const styles = StyleSheet.create({
   },
   backButton: {
     backgroundColor: Colors.goldMuted,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    borderRadius: 14,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: Colors.goldBorder,
   },
   backButtonText: {
     color: Colors.gold,
     fontWeight: '600' as const,
+    fontSize: 14,
+  },
+  footerSpacer: {
+    height: 20,
   },
 });

@@ -1,11 +1,10 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TextInput, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search as SearchIcon, X, Clock, TrendingUp } from 'lucide-react-native';
+import { Search as SearchIcon, X, TrendingUp } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { usePopeEvents } from '@/contexts/PopeEventsContext';
 import EventCard from '@/components/EventCard';
-import { PopeEvent } from '@/types';
 
 const QUICK_FILTERS = ['audience', 'mass', 'visit', 'speech', 'prayer', 'angelus'] as const;
 
@@ -61,7 +60,10 @@ export default function SearchScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>Search</Text>
+        <View style={styles.headerRow}>
+          <SearchIcon size={22} color={Colors.gold} />
+          <Text style={styles.pageTitle}>Search</Text>
+        </View>
         <Text style={styles.pageSubtitle}>Find papal events and speeches</Text>
       </View>
 
@@ -78,8 +80,8 @@ export default function SearchScreen() {
           testID="search-input"
         />
         {query.length > 0 && (
-          <Pressable onPress={clearSearch} hitSlop={12}>
-            <X size={18} color={Colors.whiteMuted} />
+          <Pressable onPress={clearSearch} hitSlop={12} style={styles.clearButton}>
+            <X size={14} color={Colors.whiteMuted} />
           </Pressable>
         )}
       </View>
@@ -118,7 +120,7 @@ export default function SearchScreen() {
       >
         {!query && !activeFilter && (
           <View style={styles.browseHint}>
-            <TrendingUp size={20} color={Colors.whiteDim} />
+            <TrendingUp size={18} color={Colors.goldWarm} />
             <Text style={styles.browseHintText}>
               Browse all {events.length} events or search above
             </Text>
@@ -137,7 +139,7 @@ export default function SearchScreen() {
 
         {filteredEvents.length === 0 && (
           <View style={styles.empty}>
-            <SearchIcon size={40} color={Colors.whiteDim} />
+            <SearchIcon size={36} color={Colors.whiteDim} />
             <Text style={styles.emptyTitle}>No events found</Text>
             <Text style={styles.emptyText}>Try a different search term or filter</Text>
           </View>
@@ -155,7 +157,12 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 12,
+    paddingBottom: 14,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   pageTitle: {
     color: Colors.gold,
@@ -164,21 +171,22 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   pageSubtitle: {
-    color: Colors.whiteMuted,
+    color: Colors.whiteDim,
     fontSize: 13,
     marginTop: 4,
+    fontStyle: 'italic' as const,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.midnightCard,
     marginHorizontal: 20,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     gap: 10,
     borderWidth: 1,
-    borderColor: Colors.midnightBorder,
+    borderColor: Colors.midnightBorderLight,
   },
   input: {
     flex: 1,
@@ -186,9 +194,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     padding: 0,
   },
+  clearButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.midnightBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   filtersScroll: {
-    maxHeight: 48,
-    marginTop: 12,
+    maxHeight: 50,
+    marginTop: 14,
   },
   filtersContent: {
     paddingHorizontal: 20,
@@ -198,14 +214,14 @@ const styles = StyleSheet.create({
   filterChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: 22,
     backgroundColor: Colors.midnightCard,
     borderWidth: 1,
     borderColor: Colors.midnightBorder,
   },
   filterChipActive: {
-    backgroundColor: Colors.goldMuted,
-    borderColor: Colors.gold,
+    backgroundColor: 'rgba(212, 175, 55, 0.08)',
+    borderColor: Colors.goldBorder,
   },
   filterText: {
     color: Colors.whiteMuted,
@@ -218,7 +234,7 @@ const styles = StyleSheet.create({
   },
   results: {
     flex: 1,
-    marginTop: 8,
+    marginTop: 10,
   },
   resultsContent: {
     padding: 20,
@@ -229,11 +245,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     marginBottom: 16,
-    backgroundColor: Colors.midnightCard,
-    borderRadius: 12,
+    backgroundColor: 'rgba(212, 175, 55, 0.04)',
+    borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: Colors.midnightBorder,
+    borderColor: Colors.goldBorder,
   },
   browseHintText: {
     color: Colors.whiteMuted,
@@ -242,10 +258,10 @@ const styles = StyleSheet.create({
   },
   resultCount: {
     color: Colors.whiteDim,
-    fontSize: 12,
-    fontWeight: '600' as const,
-    letterSpacing: 0.5,
-    marginBottom: 12,
+    fontSize: 11,
+    fontWeight: '700' as const,
+    letterSpacing: 1.5,
+    marginBottom: 14,
     textTransform: 'uppercase' as const,
   },
   eventsList: {
@@ -253,7 +269,7 @@ const styles = StyleSheet.create({
   },
   empty: {
     alignItems: 'center',
-    paddingTop: 40,
+    paddingTop: 48,
     gap: 10,
   },
   emptyTitle: {

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react-native';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday as isDayToday } from 'date-fns';
 import Colors from '@/constants/colors';
 import { usePopeEvents } from '@/contexts/PopeEventsContext';
@@ -9,7 +9,7 @@ import EventCard from '@/components/EventCard';
 import { getEventsForDate } from '@/lib/utils';
 import * as Haptics from 'expo-haptics';
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
@@ -53,7 +53,11 @@ export default function CalendarScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.pageTitle}>Calendar</Text>
+          <View style={styles.headerRow}>
+            <CalendarDays size={22} color={Colors.gold} />
+            <Text style={styles.pageTitle}>Calendar</Text>
+          </View>
+          <Text style={styles.pageSubtitle}>Papal schedule at a glance</Text>
         </View>
 
         <View style={styles.calendarCard}>
@@ -68,8 +72,8 @@ export default function CalendarScreen() {
           </View>
 
           <View style={styles.weekdayRow}>
-            {WEEKDAYS.map(d => (
-              <View key={d} style={styles.weekdayCell}>
+            {WEEKDAYS.map((d, i) => (
+              <View key={`${d}-${i}`} style={styles.weekdayCell}>
                 <Text style={styles.weekdayText}>{d}</Text>
               </View>
             ))}
@@ -113,12 +117,17 @@ export default function CalendarScreen() {
         </View>
 
         <View style={styles.eventsSection}>
-          <Text style={styles.eventsDateLabel}>
-            {format(selectedDate, 'EEEE, MMMM d')}
-          </Text>
+          <View style={styles.eventsSectionHeader}>
+            <View style={styles.sectionAccent} />
+            <Text style={styles.eventsDateLabel}>
+              {format(selectedDate, 'EEEE, MMMM d')}
+            </Text>
+          </View>
           {selectedEvents.length === 0 ? (
             <View style={styles.noEvents}>
+              <CalendarDays size={28} color={Colors.whiteDim} />
               <Text style={styles.noEventsText}>No events scheduled</Text>
+              <Text style={styles.noEventsSubtext}>Select a day with a gold dot</Text>
             </View>
           ) : (
             <View style={styles.eventsList}>
@@ -144,7 +153,12 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 12,
+    paddingBottom: 16,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   pageTitle: {
     color: Colors.gold,
@@ -152,27 +166,39 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     letterSpacing: -0.5,
   },
+  pageSubtitle: {
+    color: Colors.whiteDim,
+    fontSize: 13,
+    marginTop: 4,
+    fontStyle: 'italic' as const,
+  },
   calendarCard: {
     marginHorizontal: 20,
     backgroundColor: Colors.midnightCard,
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: 24,
+    padding: 18,
     borderWidth: 1,
-    borderColor: Colors.midnightBorder,
+    borderColor: Colors.midnightBorderLight,
   },
   monthNav: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   navButton: {
-    padding: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.goldMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   monthLabel: {
     color: Colors.white,
     fontSize: 17,
     fontWeight: '600' as const,
+    letterSpacing: -0.3,
   },
   weekdayRow: {
     flexDirection: 'row',
@@ -185,7 +211,8 @@ const styles = StyleSheet.create({
   weekdayText: {
     color: Colors.whiteDim,
     fontSize: 12,
-    fontWeight: '600' as const,
+    fontWeight: '700' as const,
+    letterSpacing: 0.5,
   },
   daysGrid: {
     flexDirection: 'row',
@@ -200,12 +227,12 @@ const styles = StyleSheet.create({
   },
   dayCellSelected: {
     backgroundColor: Colors.gold,
-    borderRadius: 20,
+    borderRadius: 22,
   },
   dayCellToday: {
-    borderWidth: 1,
-    borderColor: Colors.goldMuted,
-    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: Colors.goldGlow,
+    borderRadius: 22,
   },
   dayText: {
     color: Colors.whiteSecondary,
@@ -214,7 +241,7 @@ const styles = StyleSheet.create({
   },
   dayTextMuted: {
     color: Colors.whiteDim,
-    opacity: 0.4,
+    opacity: 0.3,
   },
   dayTextSelected: {
     color: Colors.midnight,
@@ -237,24 +264,42 @@ const styles = StyleSheet.create({
   },
   eventsSection: {
     padding: 20,
-    gap: 12,
+    gap: 14,
+  },
+  eventsSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  sectionAccent: {
+    width: 3,
+    height: 18,
+    borderRadius: 1.5,
+    backgroundColor: Colors.gold,
   },
   eventsDateLabel: {
     color: Colors.whiteSecondary,
     fontSize: 18,
     fontWeight: '700' as const,
+    letterSpacing: -0.3,
   },
   noEvents: {
     backgroundColor: Colors.midnightCard,
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 20,
+    padding: 32,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: Colors.midnightBorder,
+    gap: 8,
   },
   noEventsText: {
+    color: Colors.whiteMuted,
+    fontSize: 15,
+    fontWeight: '500' as const,
+  },
+  noEventsSubtext: {
     color: Colors.whiteDim,
-    fontSize: 14,
+    fontSize: 12,
   },
   eventsList: {
     gap: 10,

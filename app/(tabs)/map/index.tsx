@@ -1,12 +1,12 @@
-import React, { useRef, useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Navigation, MapPin, X } from 'lucide-react-native';
+import { Navigation, MapPin, X, Globe } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { usePopeEvents } from '@/contexts/PopeEventsContext';
 import { PopeEvent } from '@/types';
 import { formatTime, formatEventDateShort } from '@/lib/utils';
-import { getCategoryLabel, getCategoryColor } from '@/lib/locations';
+import { getCategoryColor } from '@/lib/locations';
 import CategoryBadge from '@/components/CategoryBadge';
 import * as Haptics from 'expo-haptics';
 
@@ -42,7 +42,10 @@ export default function MapScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.headerBar}>
-          <Text style={styles.headerTitle}>Papal Map</Text>
+          <View style={styles.headerRow}>
+            <Globe size={22} color={Colors.gold} />
+            <Text style={styles.headerTitle}>Papal Map</Text>
+          </View>
           <Text style={styles.headerSubtitle}>Locations of recent and upcoming events</Text>
         </View>
 
@@ -56,7 +59,7 @@ export default function MapScreen() {
                 style={[styles.locationCard, isSelected && styles.locationCardSelected]}
                 onPress={() => handleEventSelect(event)}
               >
-                <View style={[styles.mapPinIcon, { backgroundColor: getCategoryColor(event.category) + '30' }]}>
+                <View style={[styles.mapPinIcon, { backgroundColor: getCategoryColor(event.category) + '18' }]}>
                   <MapPin size={18} color={isCurrent ? Colors.gold : getCategoryColor(event.category)} />
                 </View>
                 <View style={styles.locationInfo}>
@@ -83,10 +86,10 @@ export default function MapScreen() {
         </ScrollView>
 
         <Pressable
-          style={[styles.locateButton, { bottom: 20 }]}
+          style={[styles.locateButton, { bottom: 24 }]}
           onPress={handleLocatePress}
         >
-          <Navigation size={20} color={Colors.midnight} />
+          <Navigation size={18} color={Colors.midnight} />
           <Text style={styles.locateText}>Find the Pope</Text>
         </Pressable>
       </View>
@@ -135,16 +138,17 @@ export default function MapScreen() {
         ))}
       </MapViewComponent>
 
-      <View style={[styles.mapOverlayTop, { top: insets.top + 10 }]}>
+      <View style={[styles.mapOverlayTop, { top: insets.top + 12 }]}>
+        <Globe size={16} color={Colors.gold} />
         <Text style={styles.mapTitle}>Papal Map</Text>
       </View>
 
       {selectedEvent && (
-        <View style={[styles.selectedCard, { bottom: insets.bottom + 20 }]}>
+        <View style={[styles.selectedCard, { bottom: insets.bottom + 24 }]}>
           <Pressable style={styles.closeButton} onPress={() => setSelectedEvent(null)}>
-            <X size={16} color={Colors.whiteMuted} />
+            <X size={14} color={Colors.whiteMuted} />
           </Pressable>
-          <CategoryBadge category={selectedEvent.category} />
+          <CategoryBadge category={selectedEvent.category} compact />
           <Text style={styles.selectedTitle}>{selectedEvent.title}</Text>
           <View style={styles.selectedMeta}>
             <MapPin size={12} color={Colors.gold} />
@@ -157,10 +161,10 @@ export default function MapScreen() {
       )}
 
       <Pressable
-        style={[styles.locateButton, { bottom: selectedEvent ? 200 : insets.bottom + 20 }]}
+        style={[styles.locateButton, { bottom: selectedEvent ? 200 : insets.bottom + 24 }]}
         onPress={handleLocatePress}
       >
-        <Navigation size={20} color={Colors.midnight} />
+        <Navigation size={18} color={Colors.midnight} />
         <Text style={styles.locateText}>Find the Pope</Text>
       </Pressable>
     </View>
@@ -183,19 +187,26 @@ const styles = StyleSheet.create({
   headerBar: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingBottom: 18,
+    borderBottomWidth: 1,
     borderBottomColor: Colors.midnightBorder,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   headerTitle: {
     color: Colors.gold,
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700' as const,
+    letterSpacing: -0.5,
   },
   headerSubtitle: {
-    color: Colors.whiteMuted,
+    color: Colors.whiteDim,
     fontSize: 13,
     marginTop: 4,
+    fontStyle: 'italic' as const,
   },
   webList: {
     flex: 1,
@@ -207,7 +218,7 @@ const styles = StyleSheet.create({
   locationCard: {
     flexDirection: 'row',
     backgroundColor: Colors.midnightCard,
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 16,
     borderWidth: 1,
     borderColor: Colors.midnightBorder,
@@ -215,18 +226,19 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   locationCardSelected: {
-    borderColor: Colors.goldMuted,
+    borderColor: Colors.goldBorder,
+    backgroundColor: 'rgba(212, 175, 55, 0.03)',
   },
   mapPinIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
   locationInfo: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
   locationHeader: {
     flexDirection: 'row',
@@ -237,26 +249,30 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 16,
     fontWeight: '600' as const,
+    letterSpacing: -0.2,
   },
   currentChip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.goldMuted,
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: 10,
     gap: 4,
+    borderWidth: 1,
+    borderColor: Colors.goldBorder,
   },
   currentDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     backgroundColor: Colors.gold,
   },
   currentText: {
     color: Colors.gold,
-    fontSize: 10,
-    fontWeight: '700' as const,
+    fontSize: 9,
+    fontWeight: '800' as const,
+    letterSpacing: 0.5,
   },
   locationSubtext: {
     color: Colors.whiteDim,
@@ -266,7 +282,7 @@ const styles = StyleSheet.create({
     color: Colors.whiteSecondary,
     fontSize: 14,
     fontWeight: '500' as const,
-    marginTop: 2,
+    marginTop: 3,
   },
   locationMeta: {
     color: Colors.whiteDim,
@@ -277,13 +293,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 20,
     backgroundColor: Colors.overlay,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: Colors.midnightBorder,
   },
   mapTitle: {
     color: Colors.gold,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700' as const,
   },
   selectedCard: {
@@ -291,31 +312,45 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
     backgroundColor: Colors.midnightCard,
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 20,
     borderWidth: 1,
-    borderColor: Colors.goldMuted,
-    gap: 6,
+    borderColor: Colors.goldBorder,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
   },
   closeButton: {
     position: 'absolute',
     right: 14,
     top: 14,
     zIndex: 1,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.midnightBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   selectedTitle: {
     color: Colors.white,
     fontSize: 18,
     fontWeight: '600' as const,
+    letterSpacing: -0.3,
+    paddingRight: 30,
   },
   selectedMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   selectedLocation: {
     color: Colors.gold,
     fontSize: 14,
+    fontWeight: '500' as const,
   },
   selectedTime: {
     color: Colors.whiteMuted,
@@ -327,19 +362,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.gold,
-    borderRadius: 24,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+    borderRadius: 26,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     gap: 8,
     shadowColor: Colors.gold,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
   },
   locateText: {
     color: Colors.midnight,
     fontSize: 14,
     fontWeight: '700' as const,
+    letterSpacing: 0.3,
   },
 });
