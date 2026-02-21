@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
-import { MapPin, ChevronRight } from 'lucide-react-native';
+import { MapPin, ChevronRight, Cross } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { PopeEvent } from '@/types';
 import { formatTime, formatEventDateShort } from '@/lib/utils';
@@ -20,7 +21,7 @@ export default function EventCard({ event, showDate, isTimeline }: EventCardProp
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
-      toValue: 0.97,
+      toValue: 0.965,
       useNativeDriver: true,
       speed: 50,
       bounciness: 4,
@@ -49,34 +50,42 @@ export default function EventCard({ event, showDate, isTimeline }: EventCardProp
         onPressOut={handlePressOut}
         testID={`event-card-${event.id}`}
       >
-        <View style={[styles.card, event.isLive && styles.cardLive]}>
+        <View style={[styles.cardOuter, event.isLive && styles.cardOuterLive]}>
           {isTimeline && (
             <View style={styles.timelineBar}>
               <View style={[styles.timelineDot, event.isLive && styles.timelineDotLive]} />
               <View style={styles.timelineLine} />
             </View>
           )}
-          <View style={styles.timeColumn}>
-            <Text style={styles.time}>{formatTime(event.time)}</Text>
-            {showDate && (
-              <Text style={styles.dateText}>{formatEventDateShort(event.date)}</Text>
-            )}
-            {event.isLive && (
-              <View style={styles.liveChip}>
-                <Text style={styles.liveText}>LIVE</Text>
+          <View style={styles.cardInner}>
+            <View style={styles.timeColumn}>
+              <View style={styles.timeBadge}>
+                <Text style={styles.time}>{formatTime(event.time)}</Text>
               </View>
-            )}
-          </View>
-          <View style={styles.content}>
-            <CategoryBadge category={event.category} compact />
-            <Text style={styles.title} numberOfLines={2}>{event.title}</Text>
-            <View style={styles.metaRow}>
-              <MapPin size={11} color={Colors.whiteDim} />
-              <Text style={styles.location} numberOfLines={1}>{event.location}</Text>
+              {showDate && (
+                <Text style={styles.dateText}>{formatEventDateShort(event.date)}</Text>
+              )}
+              {event.isLive && (
+                <LinearGradient
+                  colors={['rgba(183, 28, 28, 0.25)', 'rgba(183, 28, 28, 0.1)']}
+                  style={styles.liveChip}
+                >
+                  <View style={styles.liveDot} />
+                  <Text style={styles.liveText}>LIVE</Text>
+                </LinearGradient>
+              )}
             </View>
-          </View>
-          <View style={styles.chevronWrap}>
-            <ChevronRight size={16} color={Colors.whiteDim} />
+            <View style={styles.content}>
+              <CategoryBadge category={event.category} compact />
+              <Text style={styles.title} numberOfLines={2}>{event.title}</Text>
+              <View style={styles.metaRow}>
+                <MapPin size={11} color={Colors.goldWarm} />
+                <Text style={styles.location} numberOfLines={1}>{event.location}</Text>
+              </View>
+            </View>
+            <View style={styles.chevronWrap}>
+              <ChevronRight size={14} color={Colors.goldWarm} />
+            </View>
           </View>
         </View>
       </Pressable>
@@ -85,19 +94,21 @@ export default function EventCard({ event, showDate, isTimeline }: EventCardProp
 }
 
 const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.midnightCard,
-    borderRadius: 18,
-    padding: 16,
+  cardOuter: {
+    borderRadius: 20,
+    overflow: 'hidden',
     borderWidth: 1,
     borderColor: Colors.midnightBorder,
-    gap: 12,
+    backgroundColor: Colors.midnightCard,
   },
-  cardLive: {
-    borderColor: Colors.crimsonGlow,
-    backgroundColor: 'rgba(183, 28, 28, 0.04)',
+  cardOuterLive: {
+    borderColor: 'rgba(183, 28, 28, 0.3)',
+  },
+  cardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
   },
   timelineBar: {
     position: 'absolute',
@@ -108,31 +119,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   timelineDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: Colors.midnightBorderLight,
-    marginTop: 20,
+    marginTop: 22,
+    borderWidth: 2,
+    borderColor: Colors.midnight,
   },
   timelineDotLive: {
     backgroundColor: Colors.gold,
+    borderColor: Colors.goldMuted,
   },
   timelineLine: {
     flex: 1,
     width: 1,
-    backgroundColor: Colors.midnightBorder,
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
     marginTop: 4,
   },
   timeColumn: {
     alignItems: 'center',
-    minWidth: 56,
-    gap: 4,
+    minWidth: 60,
+    gap: 5,
+  },
+  timeBadge: {
+    backgroundColor: 'rgba(212, 175, 55, 0.06)',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   time: {
     color: Colors.goldLight,
-    fontSize: 13,
-    fontWeight: '600' as const,
+    fontSize: 12,
+    fontWeight: '700' as const,
     fontVariant: ['tabular-nums'],
+    letterSpacing: 0.3,
   },
   dateText: {
     color: Colors.whiteDim,
@@ -140,10 +161,18 @@ const styles = StyleSheet.create({
     fontWeight: '500' as const,
   },
   liveChip: {
-    backgroundColor: Colors.crimsonGlow,
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    gap: 4,
+  },
+  liveDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.crimsonLight,
   },
   liveText: {
     color: Colors.crimsonLight,
@@ -159,23 +188,25 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 15,
     fontWeight: '600' as const,
-    lineHeight: 20,
+    lineHeight: 21,
     letterSpacing: -0.2,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   location: {
     color: Colors.whiteDim,
     fontSize: 12,
   },
   chevronWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.midnightBorder,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(212, 175, 55, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },

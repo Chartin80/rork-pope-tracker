@@ -12,7 +12,7 @@ export default function CategoryBadge({ category, compact }: CategoryBadgeProps)
   const label = getCategoryLabel(category);
 
   return (
-    <View style={[styles.badge, { backgroundColor: color + '15', borderColor: color + '30' }, compact && styles.badgeCompact]}>
+    <View style={[styles.badge, { backgroundColor: color + '10', borderColor: color + '25' }, compact && styles.badgeCompact]}>
       <View style={[styles.dot, { backgroundColor: color }]} />
       <Text style={[styles.label, { color }, compact && styles.labelCompact]}>{label}</Text>
     </View>

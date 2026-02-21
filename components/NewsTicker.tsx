@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Zap } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { NEWS_HEADLINES } from '@/mocks/events';
 
@@ -14,26 +15,26 @@ export default function NewsTicker() {
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 0,
-          duration: 300,
+          duration: 350,
           useNativeDriver: true,
         }),
         Animated.timing(slideAnim, {
-          toValue: -8,
-          duration: 300,
+          toValue: -10,
+          duration: 350,
           useNativeDriver: true,
         }),
       ]).start(() => {
         setCurrentIndex(prev => (prev + 1) % NEWS_HEADLINES.length);
-        slideAnim.setValue(8);
+        slideAnim.setValue(10);
         Animated.parallel([
           Animated.timing(fadeAnim, {
             toValue: 1,
-            duration: 300,
+            duration: 350,
             useNativeDriver: true,
           }),
           Animated.timing(slideAnim, {
             toValue: 0,
-            duration: 300,
+            duration: 350,
             useNativeDriver: true,
           }),
         ]).start();
@@ -44,45 +45,56 @@ export default function NewsTicker() {
   }, [fadeAnim, slideAnim]);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.iconWrap}>
-        <Zap size={12} color={Colors.gold} />
-      </View>
-      <View style={styles.textWrap}>
-        <Animated.Text
-          style={[
-            styles.text,
-            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
-          ]}
-          numberOfLines={1}
+    <View style={styles.outerContainer}>
+      <LinearGradient
+        colors={['rgba(212, 175, 55, 0.08)', 'rgba(212, 175, 55, 0.02)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.container}
+      >
+        <LinearGradient
+          colors={['#D4AF37', '#B8942E']}
+          style={styles.iconWrap}
         >
-          {NEWS_HEADLINES[currentIndex]}
-        </Animated.Text>
-      </View>
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>NEWS</Text>
-      </View>
+          <Zap size={11} color={Colors.midnight} />
+        </LinearGradient>
+        <View style={styles.textWrap}>
+          <Animated.Text
+            style={[
+              styles.text,
+              { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+            ]}
+            numberOfLines={1}
+          >
+            {NEWS_HEADLINES[currentIndex]}
+          </Animated.Text>
+        </View>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>NEWS</Text>
+        </View>
+      </LinearGradient>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.12)',
+  },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(212, 175, 55, 0.05)',
-    borderRadius: 14,
     paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingVertical: 12,
     gap: 10,
-    borderWidth: 1,
-    borderColor: Colors.goldBorder,
   },
   iconWrap: {
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: Colors.goldMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -97,15 +109,17 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   badge: {
-    backgroundColor: Colors.goldMuted,
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.15)',
   },
   badgeText: {
-    color: Colors.goldWarm,
+    color: Colors.gold,
     fontSize: 8,
     fontWeight: '800' as const,
-    letterSpacing: 1,
+    letterSpacing: 1.2,
   },
 });

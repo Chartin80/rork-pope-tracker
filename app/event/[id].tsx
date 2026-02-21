@@ -1,8 +1,9 @@
-import React, { useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Share, Platform, Animated } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Share, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, MapPin, Clock, Share2, ExternalLink, CalendarPlus } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { usePopeEvents } from '@/contexts/PopeEventsContext';
 import CategoryBadge from '@/components/CategoryBadge';
@@ -51,7 +52,12 @@ export default function EventDetailScreen() {
         <View style={styles.notFound}>
           <Text style={styles.notFoundText}>Event not found</Text>
           <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>Go back</Text>
+            <LinearGradient
+              colors={['rgba(212, 175, 55, 0.15)', 'rgba(212, 175, 55, 0.05)']}
+              style={styles.backButtonGradient}
+            >
+              <Text style={styles.backButtonText}>Go back</Text>
+            </LinearGradient>
           </Pressable>
         </View>
       </View>
@@ -64,16 +70,23 @@ export default function EventDetailScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
-        <Pressable onPress={() => router.back()} style={styles.topBarButton} hitSlop={12}>
-          <ArrowLeft size={20} color={Colors.white} />
-        </Pressable>
-        <View style={styles.topBarActions}>
-          <Pressable onPress={handleShare} style={styles.topBarButton} hitSlop={12}>
-            <Share2 size={18} color={Colors.white} />
+
+      <LinearGradient
+        colors={['rgba(212, 175, 55, 0.04)', Colors.midnight]}
+        locations={[0, 0.3]}
+        style={styles.headerGradient}
+      >
+        <View style={[styles.topBar, { paddingTop: insets.top + 10 }]}>
+          <Pressable onPress={() => router.back()} style={styles.topBarButton} hitSlop={12}>
+            <ArrowLeft size={20} color={Colors.white} />
           </Pressable>
+          <View style={styles.topBarActions}>
+            <Pressable onPress={handleShare} style={styles.topBarButton} hitSlop={12}>
+              <Share2 size={18} color={Colors.white} />
+            </Pressable>
+          </View>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.scroll}
@@ -84,34 +97,39 @@ export default function EventDetailScreen() {
 
         <Text style={styles.title}>{event.title}</Text>
 
-        <View style={styles.metaCard}>
-          <View style={styles.metaRow}>
-            <View style={styles.metaIcon}>
-              <Clock size={16} color={Colors.gold} />
+        <View style={styles.metaCardOuter}>
+          <LinearGradient
+            colors={['rgba(17, 24, 39, 0.95)', 'rgba(10, 15, 28, 0.98)']}
+            style={styles.metaCard}
+          >
+            <View style={styles.metaRow}>
+              <LinearGradient colors={['#D4AF37', '#B8942E']} style={styles.metaIcon}>
+                <Clock size={14} color={Colors.midnight} />
+              </LinearGradient>
+              <View>
+                <Text style={styles.metaLabel}>DATE & TIME</Text>
+                <Text style={styles.metaValue}>
+                  {formatEventDate(event.date)}
+                </Text>
+                <Text style={styles.metaSubValue}>at {formatTime(event.time)}</Text>
+              </View>
             </View>
-            <View>
-              <Text style={styles.metaLabel}>DATE & TIME</Text>
-              <Text style={styles.metaValue}>
-                {formatEventDate(event.date)}
-              </Text>
-              <Text style={styles.metaSubValue}>at {formatTime(event.time)}</Text>
-            </View>
-          </View>
 
-          <View style={styles.metaDivider} />
+            <View style={styles.metaDivider} />
 
-          <View style={styles.metaRow}>
-            <View style={styles.metaIcon}>
-              <MapPin size={16} color={Colors.gold} />
+            <View style={styles.metaRow}>
+              <LinearGradient colors={['#D4AF37', '#B8942E']} style={styles.metaIcon}>
+                <MapPin size={14} color={Colors.midnight} />
+              </LinearGradient>
+              <View style={styles.metaTextWrap}>
+                <Text style={styles.metaLabel}>LOCATION</Text>
+                <Text style={styles.metaValue}>{event.location}</Text>
+                {event.locationDetail && (
+                  <Text style={styles.metaSubValue}>{event.locationDetail}</Text>
+                )}
+              </View>
             </View>
-            <View style={styles.metaTextWrap}>
-              <Text style={styles.metaLabel}>LOCATION</Text>
-              <Text style={styles.metaValue}>{event.location}</Text>
-              {event.locationDetail && (
-                <Text style={styles.metaSubValue}>{event.locationDetail}</Text>
-              )}
-            </View>
-          </View>
+          </LinearGradient>
         </View>
 
         <View style={styles.actionsRow}>
@@ -140,19 +158,27 @@ export default function EventDetailScreen() {
 
         <View style={styles.descriptionSection}>
           <Text style={styles.descriptionLabel}>About this event</Text>
-          <View style={styles.descriptionWrap}>
-            <Text style={styles.descriptionText}>
-              <Text style={styles.dropCap}>{firstLetter}</Text>
-              {restDescription}
-            </Text>
+          <View style={styles.descriptionOuter}>
+            <LinearGradient
+              colors={['rgba(17, 24, 39, 0.95)', 'rgba(10, 15, 28, 0.98)']}
+              style={styles.descriptionWrap}
+            >
+              <Text style={styles.descriptionText}>
+                <Text style={styles.dropCap}>{firstLetter}</Text>
+                {restDescription}
+              </Text>
+            </LinearGradient>
           </View>
         </View>
 
         {event.isLive && (
-          <View style={styles.liveBanner}>
+          <LinearGradient
+            colors={['rgba(183, 28, 28, 0.15)', 'rgba(183, 28, 28, 0.05)']}
+            style={styles.liveBanner}
+          >
             <View style={styles.liveIndicator} />
             <Text style={styles.liveText}>This event is currently in progress</Text>
-          </View>
+          </LinearGradient>
         )}
 
         <View style={styles.footerSpacer} />
@@ -166,24 +192,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.midnight,
   },
+  headerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.midnightBorder,
   },
   topBarButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: Colors.midnightCard,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(17, 24, 39, 0.8)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.midnightBorder,
+    borderColor: 'rgba(212, 175, 55, 0.1)',
   },
   topBarActions: {
     flexDirection: 'row',
@@ -194,22 +225,25 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    paddingTop: 100,
     paddingBottom: 40,
     gap: 18,
   },
   title: {
     color: Colors.white,
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '700' as const,
-    letterSpacing: -0.6,
-    lineHeight: 34,
+    letterSpacing: -0.8,
+    lineHeight: 36,
+  },
+  metaCardOuter: {
+    borderRadius: 22,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.12)',
   },
   metaCard: {
-    backgroundColor: Colors.midnightCard,
-    borderRadius: 20,
     padding: 20,
-    borderWidth: 1,
-    borderColor: Colors.midnightBorderLight,
     gap: 16,
   },
   metaRow: {
@@ -218,14 +252,11 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   metaIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.goldMuted,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.goldBorder,
     marginTop: 2,
   },
   metaTextWrap: {
@@ -250,7 +281,7 @@ const styles = StyleSheet.create({
   },
   metaDivider: {
     height: 1,
-    backgroundColor: Colors.midnightBorder,
+    backgroundColor: 'rgba(212, 175, 55, 0.08)',
   },
   actionsRow: {
     flexDirection: 'row',
@@ -266,11 +297,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 8,
     borderWidth: 1,
-    borderColor: Colors.midnightBorder,
+    borderColor: 'rgba(212, 175, 55, 0.08)',
   },
   actionButtonPressed: {
-    backgroundColor: Colors.midnightCardHover,
-    borderColor: Colors.goldBorder,
+    backgroundColor: 'rgba(212, 175, 55, 0.04)',
+    borderColor: 'rgba(212, 175, 55, 0.2)',
   },
   actionText: {
     color: Colors.gold,
@@ -282,38 +313,39 @@ const styles = StyleSheet.create({
   },
   descriptionLabel: {
     color: Colors.whiteSecondary,
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: '700' as const,
     letterSpacing: -0.3,
   },
-  descriptionWrap: {
-    backgroundColor: Colors.midnightCard,
-    borderRadius: 18,
-    padding: 20,
+  descriptionOuter: {
+    borderRadius: 20,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.midnightBorder,
+    borderColor: 'rgba(212, 175, 55, 0.08)',
+  },
+  descriptionWrap: {
+    padding: 22,
   },
   descriptionText: {
     color: Colors.whiteMuted,
-    fontSize: 15,
-    lineHeight: 26,
+    fontSize: 16,
+    lineHeight: 28,
   },
   dropCap: {
-    color: Colors.gold,
-    fontSize: 32,
+    color: Colors.goldLight,
+    fontSize: 36,
     fontWeight: '700' as const,
-    lineHeight: 36,
+    lineHeight: 40,
   },
   liveBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.crimsonGlow,
-    borderRadius: 16,
+    borderRadius: 18,
     paddingHorizontal: 18,
     paddingVertical: 14,
     gap: 10,
     borderWidth: 1,
-    borderColor: 'rgba(183, 28, 28, 0.35)',
+    borderColor: 'rgba(183, 28, 28, 0.25)',
   },
   liveIndicator: {
     width: 10,
@@ -337,12 +369,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   backButton: {
-    backgroundColor: Colors.goldMuted,
     borderRadius: 14,
+    overflow: 'hidden',
+  },
+  backButtonGradient: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: Colors.goldBorder,
   },
   backButtonText: {
     color: Colors.gold,

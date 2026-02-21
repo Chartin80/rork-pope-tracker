@@ -13,19 +13,20 @@ export default function LiveStatus({ event }: LiveStatusProps) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0.2)).current;
   const ringAnim = useRef(new Animated.Value(0.8)).current;
+  const borderGlow = useRef(new Animated.Value(0.15)).current;
 
   useEffect(() => {
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
-          toValue: 1.6,
-          duration: 1500,
+          toValue: 2,
+          duration: 1800,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
           toValue: 1,
-          duration: 1500,
+          duration: 1800,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
@@ -34,14 +35,14 @@ export default function LiveStatus({ event }: LiveStatusProps) {
     const glow = Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, {
-          toValue: 0.7,
-          duration: 1500,
+          toValue: 0.8,
+          duration: 1800,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
         Animated.timing(glowAnim, {
           toValue: 0.2,
-          duration: 1500,
+          duration: 1800,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
@@ -51,13 +52,29 @@ export default function LiveStatus({ event }: LiveStatusProps) {
       Animated.sequence([
         Animated.timing(ringAnim, {
           toValue: 1,
-          duration: 1500,
+          duration: 1800,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
         Animated.timing(ringAnim, {
           toValue: 0.8,
-          duration: 1500,
+          duration: 1800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    const border = Animated.loop(
+      Animated.sequence([
+        Animated.timing(borderGlow, {
+          toValue: 0.45,
+          duration: 2200,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(borderGlow, {
+          toValue: 0.15,
+          duration: 2200,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
@@ -66,201 +83,241 @@ export default function LiveStatus({ event }: LiveStatusProps) {
     pulse.start();
     glow.start();
     ring.start();
+    border.start();
     return () => {
       pulse.stop();
       glow.stop();
       ring.stop();
+      border.stop();
     };
-  }, [pulseAnim, glowAnim, ringAnim]);
+  }, [pulseAnim, glowAnim, ringAnim, borderGlow]);
 
   if (!event) {
     return (
       <View style={styles.card}>
-        <View style={styles.emptyState}>
-          <View style={styles.emptyDot} />
-          <Text style={styles.emptyLabel}>No current event</Text>
-          <Text style={styles.emptySubtext}>Schedule will resume shortly</Text>
-        </View>
+        <LinearGradient
+          colors={['rgba(17, 24, 39, 0.9)', 'rgba(10, 15, 28, 0.95)']}
+          style={styles.cardGradient}
+        >
+          <View style={styles.emptyState}>
+            <View style={styles.emptyDotOuter}>
+              <View style={styles.emptyDot} />
+            </View>
+            <Text style={styles.emptyLabel}>No current event</Text>
+            <Text style={styles.emptySubtext}>Schedule will resume shortly</Text>
+          </View>
+        </LinearGradient>
       </View>
     );
   }
 
   return (
     <View style={styles.card}>
-      <View style={styles.topRow}>
-        <View style={styles.liveChip}>
-          <View style={styles.liveIndicatorWrap}>
-            <Animated.View
-              style={[
-                styles.pulseRing,
-                { transform: [{ scale: pulseAnim }], opacity: glowAnim },
-              ]}
-            />
-            <View style={styles.liveDotCore} />
+      <LinearGradient
+        colors={['rgba(212, 175, 55, 0.06)', 'rgba(17, 24, 39, 0.95)', 'rgba(10, 15, 28, 0.98)']}
+        locations={[0, 0.4, 1]}
+        style={styles.cardGradient}
+      >
+        <View style={styles.topRow}>
+          <View style={styles.liveChip}>
+            <View style={styles.liveIndicatorWrap}>
+              <Animated.View
+                style={[
+                  styles.pulseRing,
+                  { transform: [{ scale: pulseAnim }], opacity: glowAnim },
+                ]}
+              />
+              <View style={styles.liveDotCore} />
+            </View>
+            <Text style={styles.liveLabel}>{event.isLive ? 'LIVE NOW' : 'CURRENT'}</Text>
           </View>
-          <Text style={styles.liveLabel}>{event.isLive ? 'LIVE NOW' : 'CURRENT'}</Text>
+          <Animated.View style={{ opacity: borderGlow }}>
+            <Radio size={16} color={Colors.goldWarm} />
+          </Animated.View>
         </View>
-        <Radio size={16} color={Colors.goldWarm} style={{ opacity: 0.5 }} />
-      </View>
 
-      <Text style={styles.popeTitle}>Pope Leo XIV</Text>
-      <Text style={styles.statusText}>is currently at</Text>
+        <Text style={styles.popeTitle}>Pope Leo XIV</Text>
+        <Text style={styles.statusText}>is currently at</Text>
 
-      <View style={styles.locationBlock}>
-        <View style={styles.locationIconWrap}>
-          <Animated.View style={[styles.locationGlow, { opacity: glowAnim, transform: [{ scale: ringAnim }] }]} />
-          <MapPin size={20} color={Colors.gold} />
+        <View style={styles.locationBlock}>
+          <View style={styles.locationIconWrap}>
+            <Animated.View style={[styles.locationGlow, { opacity: glowAnim, transform: [{ scale: ringAnim }] }]} />
+            <LinearGradient
+              colors={['#D4AF37', '#B8942E']}
+              style={styles.locationIconGradient}
+            >
+              <MapPin size={18} color={Colors.midnight} />
+            </LinearGradient>
+          </View>
+          <View style={styles.locationTextWrap}>
+            <Text style={styles.locationName}>{event.location}</Text>
+            {event.locationDetail && (
+              <Text style={styles.locationDetail}>{event.locationDetail}</Text>
+            )}
+          </View>
         </View>
-        <View style={styles.locationTextWrap}>
-          <Text style={styles.locationName}>{event.location}</Text>
-          {event.locationDetail && (
-            <Text style={styles.locationDetail}>{event.locationDetail}</Text>
-          )}
-        </View>
-      </View>
 
-      <View style={styles.divider} />
+        <View style={styles.divider} />
 
-      <Text style={styles.eventTitle}>{event.title}</Text>
+        <Text style={styles.eventTitle}>{event.title}</Text>
+      </LinearGradient>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.midnightCard,
-    borderRadius: 24,
-    padding: 22,
+    borderRadius: 28,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.goldBorder,
+    borderColor: 'rgba(212, 175, 55, 0.2)',
     shadowColor: Colors.gold,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 6,
+  },
+  cardGradient: {
+    padding: 24,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 20,
   },
   liveChip: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(212, 175, 55, 0.08)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 24,
+    gap: 10,
     borderWidth: 1,
-    borderColor: Colors.goldBorder,
+    borderColor: 'rgba(212, 175, 55, 0.15)',
   },
   liveIndicatorWrap: {
-    width: 10,
-    height: 10,
+    width: 12,
+    height: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pulseRing: {
     position: 'absolute',
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: Colors.gold,
   },
   liveDotCore: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: Colors.gold,
   },
   liveLabel: {
     color: Colors.gold,
     fontSize: 10,
     fontWeight: '800' as const,
-    letterSpacing: 1.8,
+    letterSpacing: 2,
   },
   popeTitle: {
     color: Colors.white,
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: '700' as const,
-    letterSpacing: -0.8,
+    letterSpacing: -1,
     marginBottom: 2,
   },
   statusText: {
     color: Colors.whiteDim,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '400' as const,
-    marginBottom: 14,
+    marginBottom: 16,
     fontStyle: 'italic' as const,
+    letterSpacing: 0.3,
   },
   locationBlock: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: 'rgba(212, 175, 55, 0.05)',
-    borderRadius: 16,
-    padding: 14,
+    gap: 14,
+    backgroundColor: 'rgba(212, 175, 55, 0.04)',
+    borderRadius: 20,
+    padding: 16,
     borderWidth: 1,
-    borderColor: Colors.goldShimmer,
+    borderColor: 'rgba(212, 175, 55, 0.1)',
   },
   locationIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.goldMuted,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
   locationGlow: {
     position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.goldGlow,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(212, 175, 55, 0.2)',
+  },
+  locationIconGradient: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   locationTextWrap: {
     flex: 1,
   },
   locationName: {
-    color: Colors.gold,
-    fontSize: 18,
-    fontWeight: '600' as const,
+    color: Colors.goldLight,
+    fontSize: 19,
+    fontWeight: '700' as const,
     letterSpacing: -0.3,
   },
   locationDetail: {
     color: Colors.whiteMuted,
     fontSize: 13,
-    marginTop: 2,
+    marginTop: 3,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: Colors.midnightBorder,
-    marginVertical: 16,
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    marginVertical: 18,
   },
   eventTitle: {
     color: Colors.whiteSecondary,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500' as const,
-    lineHeight: 22,
+    lineHeight: 24,
+    letterSpacing: -0.1,
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 12,
-    gap: 6,
+    paddingVertical: 20,
+    gap: 8,
+  },
+  emptyDotOuter: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(91, 107, 130, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
   },
   emptyDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: Colors.whiteDim,
-    marginBottom: 6,
   },
   emptyLabel: {
     color: Colors.whiteMuted,
     fontSize: 16,
-    fontWeight: '500' as const,
+    fontWeight: '600' as const,
   },
   emptySubtext: {
     color: Colors.whiteDim,

@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, Animated, Easing } from 'react-native';
-import { Crown, Bell, Archive, Palette, Users } from 'lucide-react-native';
+import { Crown, Bell, Archive, Palette, Users, Sparkles } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import * as Haptics from 'expo-haptics';
 
@@ -13,19 +14,20 @@ const FEATURES = [
 
 export default function PremiumTeaser() {
   const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const anim = Animated.loop(
       Animated.sequence([
         Animated.timing(shimmerAnim, {
           toValue: 1,
-          duration: 2000,
+          duration: 2500,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
         Animated.timing(shimmerAnim, {
           toValue: 0,
-          duration: 2000,
+          duration: 2500,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
@@ -34,6 +36,24 @@ export default function PremiumTeaser() {
     anim.start();
     return () => anim.stop();
   }, [shimmerAnim]);
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -46,64 +66,98 @@ export default function PremiumTeaser() {
   });
 
   return (
-    <Animated.View style={[styles.card, { borderColor: `rgba(212, 175, 55, 0.25)` }]}>
-      <View style={styles.header}>
-        <View style={styles.crownBadge}>
-          <Crown size={16} color={Colors.gold} />
-        </View>
-        <View style={styles.headerText}>
-          <Text style={styles.title}>Pope Tracker Premium</Text>
-          <Text style={styles.price}>$2.99/year</Text>
-        </View>
-      </View>
-
-      <View style={styles.features}>
-        {FEATURES.map((feat, i) => (
-          <View key={i} style={styles.featureRow}>
-            <feat.icon size={14} color={Colors.goldWarm} />
-            <Text style={styles.featureText}>{feat.label}</Text>
+    <Animated.View style={[styles.outer, { transform: [{ scale: scaleAnim }] }]}>
+      <View style={styles.cardContainer}>
+        <LinearGradient
+          colors={['rgba(212, 175, 55, 0.08)', 'rgba(212, 175, 55, 0.02)', 'rgba(10, 15, 28, 0.95)']}
+          locations={[0, 0.3, 1]}
+          style={styles.card}
+        >
+          <View style={styles.header}>
+            <LinearGradient
+              colors={['#D4AF37', '#B8942E']}
+              style={styles.crownBadge}
+            >
+              <Crown size={16} color={Colors.midnight} />
+            </LinearGradient>
+            <View style={styles.headerText}>
+              <Text style={styles.title}>Pope Tracker Premium</Text>
+              <Text style={styles.price}>$2.99/year</Text>
+            </View>
+            <Animated.View style={{ opacity: shimmerAnim }}>
+              <Sparkles size={18} color={Colors.goldWarm} />
+            </Animated.View>
           </View>
-        ))}
-      </View>
 
-      <Pressable
-        onPress={handlePress}
-        style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-      >
-        <Text style={styles.buttonText}>Unlock Premium</Text>
-      </Pressable>
+          <View style={styles.features}>
+            {FEATURES.map((feat, i) => (
+              <View key={i} style={styles.featureRow}>
+                <View style={styles.featureIconWrap}>
+                  <feat.icon size={13} color={Colors.gold} />
+                </View>
+                <Text style={styles.featureText}>{feat.label}</Text>
+              </View>
+            ))}
+          </View>
+
+          <Pressable
+            onPress={handlePress}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            style={styles.buttonWrap}
+          >
+            <LinearGradient
+              colors={['#D4AF37', '#C5A26F']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.button}
+            >
+              <Crown size={14} color={Colors.midnight} />
+              <Text style={styles.buttonText}>Unlock Premium</Text>
+            </LinearGradient>
+          </Pressable>
+        </LinearGradient>
+      </View>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: 'rgba(212, 175, 55, 0.04)',
-    borderRadius: 20,
-    padding: 20,
+  outer: {
+    borderRadius: 24,
+  },
+  cardContainer: {
+    borderRadius: 24,
+    overflow: 'hidden',
     borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.2)',
+    shadowColor: Colors.gold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  card: {
+    padding: 22,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 16,
+    marginBottom: 18,
   },
   crownBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.goldMuted,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.goldBorder,
   },
   headerText: {
     flex: 1,
   },
   title: {
-    color: Colors.gold,
+    color: Colors.goldLight,
     fontSize: 17,
     fontWeight: '700' as const,
     letterSpacing: -0.3,
@@ -115,27 +169,40 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   features: {
-    gap: 10,
-    marginBottom: 18,
+    gap: 12,
+    marginBottom: 20,
   },
   featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
+  },
+  featureIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(212, 175, 55, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   featureText: {
     color: Colors.whiteMuted,
     fontSize: 13,
     fontWeight: '400' as const,
+    flex: 1,
+  },
+  buttonWrap: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   button: {
-    backgroundColor: Colors.gold,
-    borderRadius: 14,
-    paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  buttonPressed: {
-    opacity: 0.85,
+    justifyContent: 'center',
+    paddingVertical: 15,
+    gap: 8,
   },
   buttonText: {
     color: Colors.midnight,

@@ -1,6 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Navigation } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { usePopeEvents } from '@/contexts/PopeEventsContext';
 import LiveStatus from '@/components/LiveStatus';
@@ -11,9 +14,11 @@ import PapalCrest from '@/components/PapalCrest';
 import GoldSpinner from '@/components/GoldSpinner';
 import GoldParticles from '@/components/GoldParticles';
 import PremiumTeaser from '@/components/PremiumTeaser';
+import * as Haptics from 'expo-haptics';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { currentEvent, nextEvent, todaysEvents, upcomingEvents, isLoading, refetch } = usePopeEvents();
   const [refreshing, setRefreshing] = React.useState(false);
 
@@ -22,6 +27,11 @@ export default function HomeScreen() {
     await refetch();
     setRefreshing(false);
   }, [refetch]);
+
+  const handleFindPope = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/(tabs)/map' as any);
+  };
 
   if (isLoading) {
     return (
@@ -38,7 +48,7 @@ export default function HomeScreen() {
       <GoldParticles />
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 8 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 12 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -50,13 +60,18 @@ export default function HomeScreen() {
       >
         <View style={styles.heroHeader}>
           <View style={styles.heroTop}>
-            <PapalCrest size={44} />
+            <PapalCrest size={52} />
             <View style={styles.heroTextWrap}>
               <Text style={styles.heroTitle}>Pope Tracker</Text>
               <Text style={styles.heroSubtitle}>Following His Holiness Pope Leo XIV</Text>
             </View>
           </View>
-          <View style={styles.heroAccent} />
+          <LinearGradient
+            colors={['rgba(212, 175, 55, 0.3)', 'rgba(212, 175, 55, 0)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.heroAccent}
+          />
         </View>
 
         <NewsTicker />
@@ -64,6 +79,21 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <LiveStatus event={currentEvent} />
         </View>
+
+        <Pressable style={styles.findPopeButton} onPress={handleFindPope}>
+          <LinearGradient
+            colors={['rgba(212, 175, 55, 0.12)', 'rgba(212, 175, 55, 0.04)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.findPopeGradient}
+          >
+            <View style={styles.findPopeIconWrap}>
+              <Navigation size={16} color={Colors.gold} />
+            </View>
+            <Text style={styles.findPopeText}>Where is the Pope now?</Text>
+            <Text style={styles.findPopeArrow}>→</Text>
+          </LinearGradient>
+        </Pressable>
 
         {nextEvent && (
           <View style={styles.section}>
@@ -74,8 +104,14 @@ export default function HomeScreen() {
         {todaysEvents.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <View style={styles.sectionAccent} />
+              <LinearGradient
+                colors={['#D4AF37', '#B8942E']}
+                style={styles.sectionAccent}
+              />
               <Text style={styles.sectionTitle}>Today's Schedule</Text>
+              <View style={styles.sectionBadge}>
+                <Text style={styles.sectionBadgeText}>{todaysEvents.length}</Text>
+              </View>
             </View>
             <View style={styles.eventsList}>
               {todaysEvents.map((event, index) => (
@@ -88,7 +124,10 @@ export default function HomeScreen() {
         {upcomingEvents.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <View style={styles.sectionAccent} />
+              <LinearGradient
+                colors={['#D4AF37', '#B8942E']}
+                style={styles.sectionAccent}
+              />
               <Text style={styles.sectionTitle}>Upcoming</Text>
             </View>
             <View style={styles.eventsList}>
@@ -104,7 +143,13 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.footer}>
-          <View style={styles.footerDivider} />
+          <LinearGradient
+            colors={['rgba(212, 175, 55, 0.15)', 'rgba(212, 175, 55, 0)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.footerDivider}
+          />
+          <Text style={styles.footerCross}>✝</Text>
           <Text style={styles.footerText}>Made with love for the Church</Text>
           <Text style={styles.footerLink}>vatican.va</Text>
         </View>
@@ -129,6 +174,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 16,
     letterSpacing: 0.3,
+    fontStyle: 'italic' as const,
   },
   scroll: {
     flex: 1,
@@ -144,28 +190,28 @@ const styles = StyleSheet.create({
   heroTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 16,
   },
   heroTextWrap: {
     flex: 1,
   },
   heroTitle: {
-    color: Colors.gold,
-    fontSize: 30,
+    color: Colors.goldLight,
+    fontSize: 32,
     fontWeight: '700' as const,
-    letterSpacing: -0.8,
+    letterSpacing: -1,
   },
   heroSubtitle: {
     color: Colors.whiteDim,
     fontSize: 13,
     fontWeight: '400' as const,
-    marginTop: 3,
+    marginTop: 4,
     fontStyle: 'italic' as const,
+    letterSpacing: 0.2,
   },
   heroAccent: {
     height: 1,
-    backgroundColor: Colors.goldBorder,
-    marginTop: 18,
+    marginTop: 20,
   },
   section: {
     gap: 12,
@@ -174,22 +220,68 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   sectionAccent: {
     width: 3,
-    height: 18,
+    height: 20,
     borderRadius: 1.5,
-    backgroundColor: Colors.gold,
   },
   sectionTitle: {
     color: Colors.whiteSecondary,
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: '700' as const,
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
+    flex: 1,
+  },
+  sectionBadge: {
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.15)',
+  },
+  sectionBadgeText: {
+    color: Colors.gold,
+    fontSize: 12,
+    fontWeight: '700' as const,
   },
   eventsList: {
     gap: 10,
+  },
+  findPopeButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.15)',
+  },
+  findPopeGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
+  },
+  findPopeIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  findPopeText: {
+    color: Colors.goldLight,
+    fontSize: 14,
+    fontWeight: '600' as const,
+    flex: 1,
+    letterSpacing: -0.1,
+  },
+  findPopeArrow: {
+    color: Colors.goldWarm,
+    fontSize: 18,
+    fontWeight: '300' as const,
   },
   footer: {
     alignItems: 'center',
@@ -198,10 +290,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   footerDivider: {
-    width: 50,
+    width: 60,
     height: 1,
-    backgroundColor: Colors.midnightBorder,
     marginBottom: 8,
+  },
+  footerCross: {
+    color: Colors.goldWarm,
+    fontSize: 16,
+    opacity: 0.4,
   },
   footerText: {
     color: Colors.whiteDim,
@@ -213,5 +309,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500' as const,
     letterSpacing: 0.3,
+    opacity: 0.7,
   },
 });
