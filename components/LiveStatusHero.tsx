@@ -1,16 +1,7 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { MapPin, Radio } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withSequence,
-  withTiming,
-  Easing,
-  interpolate,
-} from 'react-native-reanimated';
 import Colors from '@/constants/colors';
 import { Fonts } from '@/constants/typography';
 import { PopeEvent } from '@/types';
@@ -20,66 +11,47 @@ interface LiveStatusHeroProps {
 }
 
 export default function LiveStatusHero({ event }: LiveStatusHeroProps) {
-  const pulseScale = useSharedValue(1);
-  const glowOpacity = useSharedValue(0.2);
-  const ringScale = useSharedValue(0.8);
-  const borderGlow = useSharedValue(0.15);
+  const pulseScale = useRef(new Animated.Value(1)).current;
+  const glowOpacity = useRef(new Animated.Value(0.2)).current;
+  const ringScale = useRef(new Animated.Value(0.8)).current;
+  const borderGlow = useRef(new Animated.Value(0.15)).current;
 
   useEffect(() => {
-    pulseScale.value = withRepeat(
-      withSequence(
-        withTiming(1.3, { duration: 900, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 900, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      false
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseScale, { toValue: 1.3, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(pulseScale, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
     );
-
-    glowOpacity.value = withRepeat(
-      withSequence(
-        withTiming(0.8, { duration: 900, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.2, { duration: 900, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      false
+    const glow = Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowOpacity, { toValue: 0.8, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(glowOpacity, { toValue: 0.2, duration: 900, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
     );
-
-    ringScale.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.8, { duration: 1800, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      false
+    const ring = Animated.loop(
+      Animated.sequence([
+        Animated.timing(ringScale, { toValue: 1, duration: 1800, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(ringScale, { toValue: 0.8, duration: 1800, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
     );
-
-    borderGlow.value = withRepeat(
-      withSequence(
-        withTiming(0.45, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.15, { duration: 2200, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      false
+    const border = Animated.loop(
+      Animated.sequence([
+        Animated.timing(borderGlow, { toValue: 0.45, duration: 2200, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(borderGlow, { toValue: 0.15, duration: 2200, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
     );
-  }, []);
+    pulse.start();
+    glow.start();
+    ring.start();
+    border.start();
+    return () => { pulse.stop(); glow.stop(); ring.stop(); border.stop(); };
+  }, [pulseScale, glowOpacity, ringScale, borderGlow]);
 
-  const pulseAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-    opacity: interpolate(pulseScale.value, [1, 1.3], [0.8, 0]),
-  }));
-
-  const glowAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-  }));
-
-  const ringAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-    transform: [{ scale: ringScale.value }],
-  }));
-
-  const borderGlowAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: borderGlow.value,
-  }));
+  const pulseOpacity = pulseScale.interpolate({
+    inputRange: [1, 1.3],
+    outputRange: [0.8, 0],
+  });
 
   if (!event) {
     return (
@@ -110,12 +82,12 @@ export default function LiveStatusHero({ event }: LiveStatusHeroProps) {
         <View style={styles.topRow}>
           <View style={styles.liveChip}>
             <View style={styles.liveIndicatorWrap}>
-              <Animated.View style={[styles.pulseRing, pulseAnimatedStyle]} />
+              <Animated.View style={[styles.pulseRing, { transform: [{ scale: pulseScale }], opacity: pulseOpacity }]} />
               <View style={styles.liveDotCore} />
             </View>
             <Text style={styles.liveLabel}>{event.isLive ? 'LIVE NOW' : 'CURRENT'}</Text>
           </View>
-          <Animated.View style={borderGlowAnimatedStyle}>
+          <Animated.View style={{ opacity: borderGlow }}>
             <Radio size={16} color={Colors.goldWarm} />
           </Animated.View>
         </View>
@@ -125,7 +97,7 @@ export default function LiveStatusHero({ event }: LiveStatusHeroProps) {
 
         <View style={styles.locationBlock}>
           <View style={styles.locationIconWrap}>
-            <Animated.View style={[styles.locationGlow, ringAnimatedStyle]} />
+            <Animated.View style={[styles.locationGlow, { opacity: glowOpacity, transform: [{ scale: ringScale }] }]} />
             <LinearGradient
               colors={['#D4AF37', '#B8942E']}
               style={styles.locationIconGradient}
@@ -203,7 +175,7 @@ const styles = StyleSheet.create({
   liveLabel: {
     color: Colors.gold,
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '800' as const,
     letterSpacing: 2,
   },
   popeTitle: {
@@ -216,9 +188,9 @@ const styles = StyleSheet.create({
   statusText: {
     color: Colors.whiteDim,
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: '400' as const,
     marginBottom: 16,
-    fontStyle: 'italic',
+    fontStyle: 'italic' as const,
     letterSpacing: 0.3,
   },
   locationBlock: {
@@ -259,7 +231,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.heading.regular,
     color: Colors.goldLight,
     fontSize: 19,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     letterSpacing: -0.3,
   },
   locationDetail: {
@@ -275,7 +247,7 @@ const styles = StyleSheet.create({
   eventTitle: {
     color: Colors.whiteSecondary,
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '500' as const,
     lineHeight: 24,
     letterSpacing: -0.1,
   },
@@ -302,7 +274,7 @@ const styles = StyleSheet.create({
   emptyLabel: {
     color: Colors.whiteMuted,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   emptySubtext: {
     color: Colors.whiteDim,

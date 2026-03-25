@@ -1,8 +1,7 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Home, Globe, CalendarDays, Heart } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 
 export default function TabLayout() {
@@ -14,8 +13,6 @@ export default function TabLayout() {
           backgroundColor: Colors.midnightDeep,
           borderTopColor: 'rgba(212, 175, 55, 0.15)',
           borderTopWidth: StyleSheet.hairlineWidth,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingTop: 8,
           elevation: 0,
           shadowColor: Colors.gold,
           shadowOffset: { width: 0, height: -2 },

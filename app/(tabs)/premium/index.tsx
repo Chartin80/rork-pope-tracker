@@ -1,16 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Platform } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Animated, Easing } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Crown, Bell, FileText, Palette, Users, Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-  Easing,
-} from 'react-native-reanimated';
 import Colors from '@/constants/colors';
 import { Fonts } from '@/constants/typography';
 import GoldParticles from '@/components/GoldParticles';
@@ -40,29 +32,31 @@ const FEATURES = [
 
 export default function PremiumScreen() {
   const insets = useSafeAreaInsets();
-  const shimmerPosition = useSharedValue(0);
+  const shimmerPosition = useRef(new Animated.Value(0)).current;
 
-  React.useEffect(() => {
-    shimmerPosition.value = withRepeat(
-      withTiming(1, { duration: 2000, easing: Easing.linear }),
-      -1,
-      false
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.timing(shimmerPosition, {
+        toValue: 1,
+        duration: 2000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
     );
-  }, []);
+    anim.start();
+    return () => anim.stop();
+  }, [shimmerPosition]);
 
-  const shimmerStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: shimmerPosition.value * 300 - 150 }],
-    };
+  const shimmerTranslateX = shimmerPosition.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-150, 150],
   });
 
   const handleSubscribe = () => {
-    // Placeholder for RevenueCat integration
     console.log('Subscribe pressed - RevenueCat integration placeholder');
   };
 
   const handleRestore = () => {
-    // Placeholder for restore purchases
     console.log('Restore purchases pressed');
   };
 
@@ -121,7 +115,7 @@ export default function PremiumScreen() {
             end={{ x: 1, y: 0 }}
             style={styles.subscribeButton}
           >
-            <Animated.View style={[styles.shimmer, shimmerStyle]} />
+            <Animated.View style={[styles.shimmer, { transform: [{ translateX: shimmerTranslateX }, { rotate: '25deg' }] }]} />
             <Text style={styles.subscribeText}>Subscribe Now</Text>
           </LinearGradient>
         </Pressable>
@@ -177,7 +171,7 @@ const styles = StyleSheet.create({
   },
   premiumBadge: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     letterSpacing: 3,
     color: Colors.gold,
     marginTop: 8,
@@ -193,7 +187,7 @@ const styles = StyleSheet.create({
     color: Colors.whiteDim,
     fontSize: 16,
     marginTop: 16,
-    fontStyle: 'italic',
+    fontStyle: 'italic' as const,
   },
   featuresContainer: {
     gap: 12,
@@ -224,7 +218,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.heading.regular,
     fontSize: 17,
     color: Colors.white,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   featureDescription: {
     fontSize: 13,
@@ -262,7 +256,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.whiteDim,
     marginTop: 8,
-    fontStyle: 'italic',
+    fontStyle: 'italic' as const,
   },
   subscribeButtonWrap: {
     marginTop: 32,
@@ -284,9 +278,8 @@ const styles = StyleSheet.create({
   shimmer: {
     position: 'absolute',
     width: 100,
-    height: '200%',
+    height: 200,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    transform: [{ rotate: '25deg' }],
   },
   subscribeText: {
     fontFamily: Fonts.heading.bold,
@@ -302,7 +295,7 @@ const styles = StyleSheet.create({
   restoreText: {
     fontSize: 14,
     color: Colors.gold,
-    textDecorationLine: 'underline',
+    textDecorationLine: 'underline' as const,
   },
   termsContainer: {
     marginTop: 24,

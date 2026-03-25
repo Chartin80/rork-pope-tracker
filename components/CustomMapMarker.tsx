@@ -1,14 +1,6 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Animated, Easing } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withSequence,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
 import Colors from '@/constants/colors';
 
 interface CustomMapMarkerProps {
@@ -16,44 +8,36 @@ interface CustomMapMarkerProps {
   color?: string;
 }
 
-const AnimatedView = Animated.createAnimatedComponent(View);
-
 export default function CustomMapMarker({ isCurrent = false, color }: CustomMapMarkerProps) {
-  const pulseScale = useSharedValue(1);
-  const pulseOpacity = useSharedValue(0.6);
+  const pulseScale = useRef(new Animated.Value(1)).current;
+  const pulseOpacity = useRef(new Animated.Value(0.6)).current;
 
   const markerColor = isCurrent ? Colors.gold : (color || Colors.crimson);
 
   useEffect(() => {
     if (isCurrent) {
-      pulseScale.value = withRepeat(
-        withSequence(
-          withTiming(1.8, { duration: 1000, easing: Easing.out(Easing.ease) }),
-          withTiming(1, { duration: 0 })
-        ),
-        -1,
-        false
+      const scaleAnim = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseScale, { toValue: 1.8, duration: 1000, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+          Animated.timing(pulseScale, { toValue: 1, duration: 0, useNativeDriver: true }),
+        ])
       );
-      pulseOpacity.value = withRepeat(
-        withSequence(
-          withTiming(0, { duration: 1000, easing: Easing.out(Easing.ease) }),
-          withTiming(0.6, { duration: 0 })
-        ),
-        -1,
-        false
+      const opacityAnim = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseOpacity, { toValue: 0, duration: 1000, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0.6, duration: 0, useNativeDriver: true }),
+        ])
       );
+      scaleAnim.start();
+      opacityAnim.start();
+      return () => { scaleAnim.stop(); opacityAnim.stop(); };
     }
-  }, [isCurrent]);
-
-  const pulseAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-    opacity: pulseOpacity.value,
-  }));
+  }, [isCurrent, pulseScale, pulseOpacity]);
 
   return (
     <View style={styles.container}>
       {isCurrent && (
-        <AnimatedView style={[styles.pulse, { backgroundColor: markerColor }, pulseAnimatedStyle]} />
+        <Animated.View style={[styles.pulse, { backgroundColor: markerColor, transform: [{ scale: pulseScale }], opacity: pulseOpacity }]} />
       )}
       <View style={styles.markerWrap}>
         <Svg width={32} height={40} viewBox="0 0 32 40">

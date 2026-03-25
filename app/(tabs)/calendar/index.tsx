@@ -1,17 +1,9 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, Animated, Easing } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday as isDayToday } from 'date-fns';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withSequence,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
 import Colors from '@/constants/colors';
 import { Fonts } from '@/constants/typography';
 import { usePopeEvents } from '@/contexts/PopeEventsContext';
@@ -23,29 +15,24 @@ import * as Haptics from 'expo-haptics';
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 function EventDotPulse({ hasEvents, inMonth }: { hasEvents: boolean; inMonth: boolean }) {
-  const pulseOpacity = useSharedValue(0.6);
+  const pulseOpacity = useRef(new Animated.Value(0.6)).current;
 
   useEffect(() => {
     if (hasEvents && inMonth) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      pulseOpacity.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.6, { duration: 1000, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        false
+      const anim = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseOpacity, { toValue: 1, duration: 1000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0.6, duration: 1000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ])
       );
+      anim.start();
+      return () => anim.stop();
     }
   }, [hasEvents, inMonth, pulseOpacity]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: pulseOpacity.value,
-  }));
-
   if (!hasEvents || !inMonth) return null;
 
-  return <Animated.View style={[styles.eventDot, animatedStyle]} />;
+  return <Animated.View style={[styles.eventDot, { opacity: pulseOpacity }]} />;
 }
 
 export default function CalendarScreen() {
@@ -53,7 +40,6 @@ export default function CalendarScreen() {
   const { events } = usePopeEvents();
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-
 
   const selectedDateStr = useMemo(() => format(selectedDate, 'yyyy-MM-dd'), [selectedDate]);
   const selectedEvents = useMemo(() => getEventsForDate(events, selectedDateStr), [events, selectedDateStr]);

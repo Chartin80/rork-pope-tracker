@@ -1,13 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, Animated } from 'react-native';
 import { MapPin, ChevronRight } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
 import Colors from '@/constants/colors';
 import { Fonts } from '@/constants/typography';
 import { PopeEvent } from '@/types';
@@ -21,76 +16,71 @@ interface EventCardProps {
   isTimeline?: boolean;
 }
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 export default function EventCard({ event, showDate, isTimeline }: EventCardProps) {
   const router = useRouter();
-  const scale = useSharedValue(1);
+  const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.965, { damping: 15, stiffness: 300 });
+    Animated.spring(scale, { toValue: 0.965, damping: 15, stiffness: 300, mass: 1, useNativeDriver: true }).start();
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    Animated.spring(scale, { toValue: 1, damping: 15, stiffness: 300, mass: 1, useNativeDriver: true }).start();
   };
 
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push(`/event/${event.id}` as any);
   };
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
   return (
-    <AnimatedPressable
-      style={animatedStyle}
-      onPress={handlePress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      testID={`event-card-${event.id}`}
-    >
-      <View style={[styles.cardOuter, event.isLive && styles.cardOuterLive]}>
-        {isTimeline && (
-          <View style={styles.timelineBar}>
-            <View style={[styles.timelineDot, event.isLive && styles.timelineDotLive]} />
-            <View style={styles.timelineLine} />
-          </View>
-        )}
-        <View style={styles.cardInner}>
-          <View style={styles.timeColumn}>
-            <View style={styles.timeBadge}>
-              <Text style={styles.time}>{formatTime(event.time)}</Text>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        testID={`event-card-${event.id}`}
+      >
+        <View style={[styles.cardOuter, event.isLive && styles.cardOuterLive]}>
+          {isTimeline && (
+            <View style={styles.timelineBar}>
+              <View style={[styles.timelineDot, event.isLive && styles.timelineDotLive]} />
+              <View style={styles.timelineLine} />
             </View>
-            {showDate && (
-              <Text style={styles.dateText}>{formatEventDateShort(event.date)}</Text>
-            )}
-            {event.isLive && (
-              <LinearGradient
-                colors={['rgba(183, 28, 28, 0.25)', 'rgba(183, 28, 28, 0.1)']}
-                style={styles.liveChip}
-              >
-                <View style={styles.liveDot} />
-                <Text style={styles.liveText}>LIVE</Text>
-              </LinearGradient>
-            )}
-          </View>
-          <View style={styles.content}>
-            <CategoryBadge category={event.category} compact />
-            <Text style={styles.title} numberOfLines={2}>{event.title}</Text>
-            <View style={styles.metaRow}>
-              <MapPin size={11} color={Colors.goldWarm} />
-              <Text style={styles.location} numberOfLines={1}>{event.location}</Text>
+          )}
+          <View style={styles.cardInner}>
+            <View style={styles.timeColumn}>
+              <View style={styles.timeBadge}>
+                <Text style={styles.time}>{formatTime(event.time)}</Text>
+              </View>
+              {showDate && (
+                <Text style={styles.dateText}>{formatEventDateShort(event.date)}</Text>
+              )}
+              {event.isLive && (
+                <LinearGradient
+                  colors={['rgba(183, 28, 28, 0.25)', 'rgba(183, 28, 28, 0.1)']}
+                  style={styles.liveChip}
+                >
+                  <View style={styles.liveDot} />
+                  <Text style={styles.liveText}>LIVE</Text>
+                </LinearGradient>
+              )}
             </View>
-          </View>
-          <View style={styles.chevronWrap}>
-            <ChevronRight size={14} color={Colors.goldWarm} />
+            <View style={styles.content}>
+              <CategoryBadge category={event.category} compact />
+              <Text style={styles.title} numberOfLines={2}>{event.title}</Text>
+              <View style={styles.metaRow}>
+                <MapPin size={11} color={Colors.goldWarm} />
+                <Text style={styles.location} numberOfLines={1}>{event.location}</Text>
+              </View>
+            </View>
+            <View style={styles.chevronWrap}>
+              <ChevronRight size={14} color={Colors.goldWarm} />
+            </View>
           </View>
         </View>
-      </View>
-    </AnimatedPressable>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -152,14 +142,14 @@ const styles = StyleSheet.create({
   time: {
     color: Colors.goldLight,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.3,
   },
   dateText: {
     color: Colors.whiteDim,
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '500' as const,
   },
   liveChip: {
     flexDirection: 'row',
@@ -178,7 +168,7 @@ const styles = StyleSheet.create({
   liveText: {
     color: Colors.crimsonLight,
     fontSize: 8,
-    fontWeight: '800',
+    fontWeight: '800' as const,
     letterSpacing: 1,
   },
   content: {
@@ -189,7 +179,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.heading.regular,
     color: Colors.white,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     lineHeight: 21,
     letterSpacing: -0.2,
   },

@@ -1,14 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Clock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSequence,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
 import Colors from '@/constants/colors';
 import { Fonts } from '@/constants/typography';
 import { PopeEvent } from '@/types';
@@ -20,22 +13,18 @@ interface CountdownProps {
 
 export default function Countdown({ event }: CountdownProps) {
   const [seconds, setSeconds] = useState<number>(() => getSecondsUntil(event));
-  const tickScale = useSharedValue(1);
+  const tickScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const interval = setInterval(() => {
       setSeconds(getSecondsUntil(event));
-      tickScale.value = withSequence(
-        withTiming(0.92, { duration: 80 }),
-        withSpring(1, { damping: 8, stiffness: 300 })
-      );
+      Animated.sequence([
+        Animated.timing(tickScale, { toValue: 0.92, duration: 80, useNativeDriver: true }),
+        Animated.spring(tickScale, { toValue: 1, damping: 8, stiffness: 300, mass: 1, useNativeDriver: true }),
+      ]).start();
     }, 1000);
     return () => clearInterval(interval);
-  }, [event]);
-
-  const tickAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: tickScale.value }],
-  }));
+  }, [event, tickScale]);
 
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
@@ -67,7 +56,7 @@ export default function Countdown({ event }: CountdownProps) {
           <Text style={styles.label}>NEXT EVENT</Text>
         </View>
 
-        <Animated.View style={[styles.timerRow, tickAnimatedStyle]}>
+        <Animated.View style={[styles.timerRow, { transform: [{ scale: tickScale }] }]}>
           {units.map((unit, i) => (
             <React.Fragment key={unit.label}>
               {i > 0 && <Text style={styles.colon}>:</Text>}
@@ -134,7 +123,7 @@ const styles = StyleSheet.create({
   label: {
     color: Colors.goldWarm,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     letterSpacing: 2.5,
   },
   timerRow: {
@@ -166,14 +155,14 @@ const styles = StyleSheet.create({
   timerLabel: {
     color: Colors.whiteDim,
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     letterSpacing: 2.5,
     marginTop: 8,
   },
   colon: {
     color: Colors.goldWarm,
     fontSize: 36,
-    fontWeight: '200',
+    fontWeight: '200' as const,
     marginHorizontal: 2,
     marginTop: 12,
     opacity: 0.4,
@@ -186,7 +175,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.heading.regular,
     color: Colors.white,
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: '600' as const,
     textAlign: 'center',
     letterSpacing: -0.3,
   },

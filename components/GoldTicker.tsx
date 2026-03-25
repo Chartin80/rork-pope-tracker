@@ -1,43 +1,31 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import Colors from '@/constants/colors';
 import { NEWS_HEADLINES } from '@/mocks/events';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function GoldTicker() {
-  const translateX = useSharedValue(0);
+  const translateX = useRef(new Animated.Value(0)).current;
 
   const tickerText = NEWS_HEADLINES.join('  •  ');
   const textWidth = tickerText.length * 7;
 
   useEffect(() => {
-    translateX.value = withRepeat(
-      withTiming(-textWidth, {
+    const anim = Animated.loop(
+      Animated.timing(translateX, {
+        toValue: -textWidth,
         duration: textWidth * 50,
         easing: Easing.linear,
-      }),
-      -1,
-      false
+        useNativeDriver: true,
+      })
     );
-  }, [textWidth]);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  });
+    anim.start();
+    return () => anim.stop();
+  }, [textWidth, translateX]);
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.tickerWrap, animatedStyle]}>
+      <Animated.View style={[styles.tickerWrap, { transform: [{ translateX }] }]}>
         <Text style={styles.tickerText}>
           {tickerText}  •  {tickerText}
         </Text>
@@ -61,7 +49,7 @@ const styles = StyleSheet.create({
   tickerText: {
     color: Colors.gold,
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '500' as const,
     letterSpacing: 0.5,
   },
 });

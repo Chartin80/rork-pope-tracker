@@ -1,14 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable, Platform } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Navigation } from 'lucide-react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
 import Colors from '@/constants/colors';
 import { Fonts } from '@/constants/typography';
 import { usePopeEvents } from '@/contexts/PopeEventsContext';
@@ -23,14 +18,12 @@ import GoldParticles from '@/components/GoldParticles';
 import PremiumTeaser from '@/components/PremiumTeaser';
 import * as Haptics from 'expo-haptics';
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { currentEvent, nextEvent, todaysEvents, upcomingEvents, isLoading, refetch } = usePopeEvents();
   const [refreshing, setRefreshing] = React.useState(false);
-  const fabScale = useSharedValue(1);
+  const fabScale = useRef(new Animated.Value(1)).current;
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -39,21 +32,17 @@ export default function HomeScreen() {
   }, [refetch]);
 
   const handleFindPope = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push('/(tabs)/map' as any);
   };
 
   const handleFabPressIn = () => {
-    fabScale.value = withSpring(0.9, { damping: 15, stiffness: 300 });
+    Animated.spring(fabScale, { toValue: 0.9, damping: 15, stiffness: 300, mass: 1, useNativeDriver: true }).start();
   };
 
   const handleFabPressOut = () => {
-    fabScale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    Animated.spring(fabScale, { toValue: 1, damping: 15, stiffness: 300, mass: 1, useNativeDriver: true }).start();
   };
-
-  const fabAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: fabScale.value }],
-  }));
 
   if (isLoading) {
     return (
@@ -167,19 +156,20 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      <AnimatedPressable
-        style={[styles.fab, fabAnimatedStyle, { bottom: insets.bottom + 90 }]}
-        onPress={handleFindPope}
-        onPressIn={handleFabPressIn}
-        onPressOut={handleFabPressOut}
-      >
-        <LinearGradient
-          colors={['#D4AF37', '#B8942E']}
-          style={styles.fabGradient}
+      <Animated.View style={[styles.fab, { bottom: insets.bottom + 90, transform: [{ scale: fabScale }] }]}>
+        <Pressable
+          onPress={handleFindPope}
+          onPressIn={handleFabPressIn}
+          onPressOut={handleFabPressOut}
         >
-          <Navigation size={22} color={Colors.midnight} />
-        </LinearGradient>
-      </AnimatedPressable>
+          <LinearGradient
+            colors={['#D4AF37', '#B8942E']}
+            style={styles.fabGradient}
+          >
+            <Navigation size={22} color={Colors.midnight} />
+          </LinearGradient>
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }

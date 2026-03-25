@@ -1,20 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withSequence,
-  withTiming,
-  withDelay,
-  Easing,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef, useMemo } from 'react';
+import { View, StyleSheet, Dimensions, Animated, Easing } from 'react-native';
 import Colors from '@/constants/colors';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const PARTICLE_COUNT = 22;
+const PARTICLE_COUNT = 15;
 
-interface Particle {
+interface ParticleData {
   x: number;
   y: number;
   size: number;
@@ -24,74 +15,79 @@ interface Particle {
   driftX: number;
 }
 
-function ParticleDot({ particle }: { particle: Particle }) {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const translateX = useSharedValue(0);
+function ParticleDot({ particle }: { particle: ParticleData }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+  const translateX = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    opacity.value = withDelay(
-      particle.delay,
-      withRepeat(
-        withSequence(
-          withTiming(particle.isCross ? 0.35 : 0.5, {
-            duration: particle.duration / 2,
-            easing: Easing.inOut(Easing.ease),
-          }),
-          withTiming(0, {
-            duration: particle.duration / 2,
-            easing: Easing.inOut(Easing.ease),
-          })
-        ),
-        -1,
-        false
-      )
+    const maxOpacity = particle.isCross ? 0.35 : 0.5;
+    const halfDur = particle.duration / 2;
+
+    const opacityAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: maxOpacity,
+          duration: halfDur,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+          delay: particle.delay,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: halfDur,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
     );
 
-    translateY.value = withDelay(
-      particle.delay,
-      withRepeat(
-        withSequence(
-          withTiming(-15, {
-            duration: particle.duration / 2,
-            easing: Easing.inOut(Easing.ease),
-          }),
-          withTiming(0, {
-            duration: particle.duration / 2,
-            easing: Easing.inOut(Easing.ease),
-          })
-        ),
-        -1,
-        false
-      )
+    const yAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(translateY, {
+          toValue: -15,
+          duration: halfDur,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+          delay: particle.delay,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: halfDur,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
     );
 
-    translateX.value = withDelay(
-      particle.delay,
-      withRepeat(
-        withSequence(
-          withTiming(particle.driftX, {
-            duration: particle.duration / 2,
-            easing: Easing.inOut(Easing.ease),
-          }),
-          withTiming(0, {
-            duration: particle.duration / 2,
-            easing: Easing.inOut(Easing.ease),
-          })
-        ),
-        -1,
-        false
-      )
+    const xAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(translateX, {
+          toValue: particle.driftX,
+          duration: halfDur,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+          delay: particle.delay,
+        }),
+        Animated.timing(translateX, {
+          toValue: 0,
+          duration: halfDur,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
     );
-  }, []);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { translateY: translateY.value },
-      { translateX: translateX.value },
-    ],
-  }));
+    opacityAnim.start();
+    yAnim.start();
+    xAnim.start();
+
+    return () => {
+      opacityAnim.stop();
+      yAnim.stop();
+      xAnim.stop();
+    };
+  }, [particle.delay, particle.duration, particle.driftX, particle.isCross, opacity, translateX, translateY]);
 
   if (particle.isCross) {
     return (
@@ -101,8 +97,9 @@ function ParticleDot({ particle }: { particle: Particle }) {
           {
             left: particle.x,
             top: particle.y,
+            opacity,
+            transform: [{ translateY }, { translateX }],
           },
-          animatedStyle,
         ]}
       >
         <View style={[styles.crossH, { width: particle.size * 3, height: particle.size * 0.8 }]} />
@@ -121,15 +118,16 @@ function ParticleDot({ particle }: { particle: Particle }) {
           width: particle.size,
           height: particle.size,
           borderRadius: particle.size / 2,
+          opacity,
+          transform: [{ translateY }, { translateX }],
         },
-        animatedStyle,
       ]}
     />
   );
 }
 
 export default function GoldParticles() {
-  const particles = useMemo<Particle[]>(() => {
+  const particles = useMemo<ParticleData[]>(() => {
     return Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
       x: Math.random() * SCREEN_WIDTH,
       y: Math.random() * SCREEN_HEIGHT,
