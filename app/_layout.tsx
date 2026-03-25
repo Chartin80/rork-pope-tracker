@@ -4,11 +4,12 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as Font from 'expo-font';
 import React, { useEffect, useState, useCallback } from 'react';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PopeEventsProvider } from '@/contexts/PopeEventsContext';
 import Colors from '@/constants/colors';
 
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ function RootLayoutNav() {
           headerShown: false,
         }}
       />
+      <Stack.Screen name="+not-found" options={{ title: 'Not Found' }} />
     </Stack>
   );
 }
@@ -40,28 +42,30 @@ export default function RootLayout() {
   useEffect(() => {
     async function loadFonts() {
       try {
-        await Font.loadAsync({
-          'PlayfairDisplay-Regular': require('../assets/fonts/PlayfairDisplay-Regular.ttf'),
-          'PlayfairDisplay-Bold': require('../assets/fonts/PlayfairDisplay-Bold.ttf'),
-        });
+        if (Platform.OS !== 'web') {
+          await Font.loadAsync({
+            'PlayfairDisplay-Regular': require('../assets/fonts/PlayfairDisplay-Regular.ttf'),
+            'PlayfairDisplay-Bold': require('../assets/fonts/PlayfairDisplay-Bold.ttf'),
+          });
+        }
         setFontsLoaded(true);
       } catch (error) {
         console.error('Error loading fonts:', error);
         setFontsLoaded(true);
       }
     }
-    loadFonts();
+    void loadFonts();
   }, []);
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {
-      await SplashScreen.hideAsync();
+      void SplashScreen.hideAsync();
     }
   }, [fontsLoaded]);
 
   useEffect(() => {
     if (fontsLoaded) {
-      onLayoutRootView();
+      void onLayoutRootView();
     }
   }, [fontsLoaded, onLayoutRootView]);
 

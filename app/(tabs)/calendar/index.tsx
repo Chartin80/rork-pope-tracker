@@ -10,11 +10,7 @@ import Animated, {
   withRepeat,
   withSequence,
   withTiming,
-  withSpring,
   Easing,
-  FadeIn,
-  SlideInRight,
-  SlideInLeft,
 } from 'react-native-reanimated';
 import Colors from '@/constants/colors';
 import { Fonts } from '@/constants/typography';
@@ -24,8 +20,6 @@ import GoldParticles from '@/components/GoldParticles';
 import { getEventsForDate } from '@/lib/utils';
 import * as Haptics from 'expo-haptics';
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 function EventDotPulse({ hasEvents, inMonth }: { hasEvents: boolean; inMonth: boolean }) {
@@ -33,6 +27,7 @@ function EventDotPulse({ hasEvents, inMonth }: { hasEvents: boolean; inMonth: bo
 
   useEffect(() => {
     if (hasEvents && inMonth) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       pulseOpacity.value = withRepeat(
         withSequence(
           withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
@@ -42,7 +37,7 @@ function EventDotPulse({ hasEvents, inMonth }: { hasEvents: boolean; inMonth: bo
         false
       );
     }
-  }, [hasEvents, inMonth]);
+  }, [hasEvents, inMonth, pulseOpacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: pulseOpacity.value,
@@ -58,7 +53,7 @@ export default function CalendarScreen() {
   const { events } = usePopeEvents();
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [direction, setDirection] = useState<'left' | 'right'>('right');
+
 
   const selectedDateStr = useMemo(() => format(selectedDate, 'yyyy-MM-dd'), [selectedDate]);
   const selectedEvents = useMemo(() => getEventsForDate(events, selectedDateStr), [events, selectedDateStr]);
@@ -78,19 +73,17 @@ export default function CalendarScreen() {
   }, [currentMonth]);
 
   const goToPrevMonth = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setDirection('left');
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setCurrentMonth(prev => subMonths(prev, 1));
   }, []);
 
   const goToNextMonth = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setDirection('right');
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setCurrentMonth(prev => addMonths(prev, 1));
   }, []);
 
   const selectDay = useCallback((day: Date) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedDate(day);
   }, []);
 
@@ -119,13 +112,9 @@ export default function CalendarScreen() {
               <Pressable onPress={goToPrevMonth} style={styles.navButton}>
                 <ChevronLeft size={18} color={Colors.gold} />
               </Pressable>
-              <Animated.Text
-                key={format(currentMonth, 'yyyy-MM')}
-                entering={direction === 'right' ? SlideInRight.duration(300) : SlideInLeft.duration(300)}
-                style={styles.monthLabel}
-              >
+              <Text style={styles.monthLabel}>
                 {format(currentMonth, 'MMMM yyyy')}
-              </Animated.Text>
+              </Text>
               <Pressable onPress={goToNextMonth} style={styles.navButton}>
                 <ChevronRight size={18} color={Colors.gold} />
               </Pressable>

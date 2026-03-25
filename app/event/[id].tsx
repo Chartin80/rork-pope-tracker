@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, MapPin, Clock, Share2, ExternalLink, CalendarPlus } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeIn, SlideInUp } from 'react-native-reanimated';
 import Colors from '@/constants/colors';
 import { Fonts } from '@/constants/typography';
 import { usePopeEvents } from '@/contexts/PopeEventsContext';
@@ -21,7 +20,7 @@ export default function EventDetailScreen() {
   const event = useMemo(() => events.find(e => e.id === id), [events, id]);
 
   const handleShare = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (!event) return;
     try {
       await Share.share({
@@ -34,7 +33,7 @@ export default function EventDetailScreen() {
 
   const handleMapsLink = () => {
     if (!event) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const url = `https://www.google.com/maps/search/?api=1&query=${event.latitude},${event.longitude}`;
     if (Platform.OS === 'web') {
       window.open(url, '_blank');
@@ -43,7 +42,7 @@ export default function EventDetailScreen() {
 
   const handleAddToCalendar = () => {
     if (!event) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     console.log('Add to calendar:', event.id);
   };
 
@@ -95,21 +94,15 @@ export default function EventDetailScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeIn.delay(100).duration(400)}>
+        <View>
           <CategoryBadge category={event.category} />
-        </Animated.View>
+        </View>
 
-        <Animated.Text
-          entering={FadeInDown.delay(150).duration(500).springify()}
-          style={styles.title}
-        >
+        <Text style={styles.title}>
           {event.title}
-        </Animated.Text>
+        </Text>
 
-        <Animated.View
-          entering={FadeInDown.delay(200).duration(500).springify()}
-          style={styles.metaCardOuter}
-        >
+        <View style={styles.metaCardOuter}>
           <LinearGradient
             colors={['rgba(17, 24, 39, 0.95)', 'rgba(10, 15, 28, 0.98)']}
             style={styles.metaCard}
@@ -142,12 +135,9 @@ export default function EventDetailScreen() {
               </View>
             </View>
           </LinearGradient>
-        </Animated.View>
+        </View>
 
-        <Animated.View
-          entering={FadeInDown.delay(250).duration(500).springify()}
-          style={styles.actionsRow}
-        >
+        <View style={styles.actionsRow}>
           <Pressable
             style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
             onPress={handleMapsLink}
@@ -169,12 +159,9 @@ export default function EventDetailScreen() {
             <Share2 size={15} color={Colors.gold} />
             <Text style={styles.actionText}>Share</Text>
           </Pressable>
-        </Animated.View>
+        </View>
 
-        <Animated.View
-          entering={FadeInDown.delay(300).duration(500).springify()}
-          style={styles.descriptionSection}
-        >
+        <View style={styles.descriptionSection}>
           <Text style={styles.descriptionLabel}>About this event</Text>
           <View style={styles.descriptionOuter}>
             <LinearGradient
@@ -187,7 +174,7 @@ export default function EventDetailScreen() {
               </Text>
             </LinearGradient>
           </View>
-        </Animated.View>
+        </View>
 
         {event.isLive && (
           <LinearGradient

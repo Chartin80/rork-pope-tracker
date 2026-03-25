@@ -1,9 +1,8 @@
-import React, { useMemo, useCallback, useState, useRef } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Navigation, MapPin, X, Globe, ChevronRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Colors from '@/constants/colors';
 import { Fonts } from '@/constants/typography';
 import { usePopeEvents } from '@/contexts/PopeEventsContext';
@@ -13,7 +12,6 @@ import { getCategoryColor } from '@/lib/locations';
 import CategoryBadge from '@/components/CategoryBadge';
 import GoldParticles from '@/components/GoldParticles';
 import CustomMapMarker from '@/components/CustomMapMarker';
-import EventDetailBottomSheet, { EventDetailBottomSheetRef } from '@/components/EventDetailBottomSheet';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
@@ -22,7 +20,6 @@ export default function MapScreen() {
   const router = useRouter();
   const { events, currentEvent } = usePopeEvents();
   const [selectedEvent, setSelectedEvent] = useState<PopeEvent | null>(null);
-  const bottomSheetRef = useRef<EventDetailBottomSheetRef>(null);
 
   const uniqueLocations = useMemo(() => {
     const seen = new Map<string, PopeEvent>();
@@ -36,16 +33,15 @@ export default function MapScreen() {
   }, [events]);
 
   const handleLocatePress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (currentEvent) {
       setSelectedEvent(currentEvent);
     }
   }, [currentEvent]);
 
   const handleEventSelect = useCallback((event: PopeEvent) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedEvent(event);
-    bottomSheetRef.current?.expand();
   }, []);
 
   const handleCloseBottomSheet = useCallback(() => {
@@ -53,7 +49,7 @@ export default function MapScreen() {
   }, []);
 
   const handleEventDetail = useCallback((event: PopeEvent) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push(`/event/${event.id}` as any);
   }, [router]);
 
@@ -155,7 +151,7 @@ export default function MapScreen() {
   }
 
   return (
-    <GestureHandlerRootView style={styles.container}>
+    <View style={styles.container}>
       <MapViewComponent
         style={StyleSheet.absoluteFillObject}
         initialRegion={{
@@ -205,12 +201,42 @@ export default function MapScreen() {
         </LinearGradient>
       </Pressable>
 
-      <EventDetailBottomSheet
-        ref={bottomSheetRef}
-        event={selectedEvent}
-        onClose={handleCloseBottomSheet}
-      />
-    </GestureHandlerRootView>
+      {selectedEvent && (
+        <View style={[styles.eventPopup, { bottom: insets.bottom + 80 }]}> 
+          <LinearGradient
+            colors={['rgba(17, 24, 39, 0.98)', 'rgba(10, 15, 28, 0.99)']}
+            style={styles.eventPopupGradient}
+          >
+            <Pressable style={styles.popupClose} onPress={handleCloseBottomSheet}>
+              <X size={14} color={Colors.whiteMuted} />
+            </Pressable>
+            <CategoryBadge category={selectedEvent.category} compact />
+            <Text style={styles.popupTitle} numberOfLines={2}>{selectedEvent.title}</Text>
+            <View style={styles.popupMeta}>
+              <MapPin size={12} color={Colors.gold} />
+              <Text style={styles.popupLocation}>{selectedEvent.location}</Text>
+            </View>
+            <Text style={styles.popupTime}>
+              {formatEventDateShort(selectedEvent.date)} · {formatTime(selectedEvent.time)}
+            </Text>
+            <Pressable
+              style={styles.popupDetailBtn}
+              onPress={() => handleEventDetail(selectedEvent)}
+            >
+              <LinearGradient
+                colors={['#D4AF37', '#B8942E']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.popupDetailBtnGradient}
+              >
+                <Text style={styles.popupDetailBtnText}>View Details</Text>
+                <ChevronRight size={14} color={Colors.midnight} />
+              </LinearGradient>
+            </Pressable>
+          </LinearGradient>
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -394,6 +420,75 @@ const styles = StyleSheet.create({
     color: Colors.midnight,
     fontSize: 14,
     fontWeight: '700' as const,
+    letterSpacing: 0.3,
+  },
+  eventPopup: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  eventPopupGradient: {
+    padding: 20,
+    gap: 10,
+  },
+  popupClose: {
+    position: 'absolute',
+    right: 16,
+    top: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(30, 42, 69, 0.8)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  popupTitle: {
+    fontFamily: Fonts.heading.bold,
+    color: Colors.white,
+    fontSize: 18,
+    letterSpacing: -0.3,
+    paddingRight: 32,
+  },
+  popupMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  popupLocation: {
+    color: Colors.gold,
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  popupTime: {
+    color: Colors.whiteMuted,
+    fontSize: 13,
+  },
+  popupDetailBtn: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginTop: 6,
+  },
+  popupDetailBtnGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 6,
+  },
+  popupDetailBtnText: {
+    fontFamily: Fonts.heading.bold,
+    color: Colors.midnight,
+    fontSize: 14,
     letterSpacing: 0.3,
   },
 });
