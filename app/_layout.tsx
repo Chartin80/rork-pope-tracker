@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { Platform, View, Text, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as Font from 'expo-font';
 import { PopeEventsProvider } from '@/contexts/PopeEventsContext';
 import Colors from '@/constants/colors';
 
@@ -92,22 +93,30 @@ export default function RootLayout() {
   const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
     async function prepare() {
       try {
-        if (Platform.OS !== 'web') {
-          const Font = await import('expo-font');
-          await Font.loadAsync({
-            'PlayfairDisplay-Regular': require('../assets/fonts/PlayfairDisplay-Regular.ttf'),
-            'PlayfairDisplay-Bold': require('../assets/fonts/PlayfairDisplay-Bold.ttf'),
-          });
-        }
+        console.log('[RootLayout] Starting font loading, platform:', Platform.OS);
+        await Font.loadAsync({
+          'PlayfairDisplay-Regular': require('../assets/fonts/PlayfairDisplay-Regular.ttf'),
+          'PlayfairDisplay-Bold': require('../assets/fonts/PlayfairDisplay-Bold.ttf'),
+        });
+        console.log('[RootLayout] Fonts loaded successfully');
       } catch (error) {
-        console.warn('Font loading error (non-fatal):', error);
+        console.warn('[RootLayout] Font loading error (non-fatal):', error);
       } finally {
         setAppReady(true);
       }
     }
+
+    timeout = setTimeout(() => {
+      console.warn('[RootLayout] Font loading timed out, forcing app ready');
+      setAppReady(true);
+    }, 3000);
+
     void prepare();
+
+    return () => clearTimeout(timeout);
   }, []);
 
   useEffect(() => {

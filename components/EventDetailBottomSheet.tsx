@@ -1,7 +1,6 @@
-import React, { useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useCallback, forwardRef, useImperativeHandle, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
-import BottomSheet, { BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { MapPin, Clock, ChevronRight, X } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -24,107 +23,94 @@ export interface EventDetailBottomSheetRef {
 const EventDetailBottomSheet = forwardRef<EventDetailBottomSheetRef, EventDetailBottomSheetProps>(
   ({ event, onClose }, ref) => {
     const router = useRouter();
-    const bottomSheetRef = React.useRef<BottomSheet>(null);
-
-    const snapPoints = useMemo(() => ['30%', '60%'], []);
+    const [visible, setVisible] = useState(false);
 
     useImperativeHandle(ref, () => ({
-      expand: () => {
-        bottomSheetRef.current?.expand();
-      },
+      expand: () => setVisible(true),
       close: () => {
-        bottomSheetRef.current?.close();
+        setVisible(false);
+        onClose();
       },
     }));
 
-    const handleSheetChanges = useCallback((index: number) => {
-      if (index === -1) {
-        onClose();
-      }
-    }, [onClose]);
-
     const handleViewDetails = useCallback(() => {
       if (event) {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setVisible(false);
+        onClose();
         router.push(`/event/${event.id}` as any);
       }
-    }, [event, router]);
+    }, [event, router, onClose]);
 
-    const renderBackdrop = useCallback(
-      (props: any) => (
-        <BottomSheetBackdrop
-          {...props}
-          disappearsOnIndex={-1}
-          appearsOnIndex={0}
-          opacity={0.7}
-        />
-      ),
-      []
-    );
+    const handleClose = useCallback(() => {
+      setVisible(false);
+      onClose();
+    }, [onClose]);
 
     if (!event) return null;
 
     return (
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={0}
-        snapPoints={snapPoints}
-        onChange={handleSheetChanges}
-        enablePanDownToClose
-        backdropComponent={renderBackdrop}
-        handleIndicatorStyle={styles.handleIndicator}
-        backgroundStyle={styles.background}
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        onRequestClose={handleClose}
       >
-        <View style={styles.content}>
-          <Pressable style={styles.closeButton} onPress={onClose}>
-            <X size={16} color={Colors.whiteMuted} />
-          </Pressable>
+        <Pressable style={styles.backdrop} onPress={handleClose}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.handleBar} />
+            <View style={styles.content}>
+              <Pressable style={styles.closeButton} onPress={handleClose}>
+                <X size={16} color={Colors.whiteMuted} />
+              </Pressable>
 
-          <View style={styles.header}>
-            <CategoryBadge category={event.category} />
-            {event.isLive && (
-              <View style={styles.liveChip}>
-                <View style={styles.liveDot} />
-                <Text style={styles.liveText}>LIVE</Text>
+              <View style={styles.header}>
+                <CategoryBadge category={event.category} />
+                {event.isLive && (
+                  <View style={styles.liveChip}>
+                    <View style={styles.liveDot} />
+                    <Text style={styles.liveText}>LIVE</Text>
+                  </View>
+                )}
               </View>
-            )}
-          </View>
 
-          <Text style={styles.title}>{event.title}</Text>
+              <Text style={styles.title}>{event.title}</Text>
 
-          <View style={styles.metaRow}>
-            <MapPin size={14} color={Colors.gold} />
-            <Text style={styles.location}>{event.location}</Text>
-          </View>
+              <View style={styles.metaRow}>
+                <MapPin size={14} color={Colors.gold} />
+                <Text style={styles.location}>{event.location}</Text>
+              </View>
 
-          {event.locationDetail && (
-            <Text style={styles.locationDetail}>{event.locationDetail}</Text>
-          )}
+              {event.locationDetail && (
+                <Text style={styles.locationDetail}>{event.locationDetail}</Text>
+              )}
 
-          <View style={styles.metaRow}>
-            <Clock size={14} color={Colors.goldWarm} />
-            <Text style={styles.time}>
-              {formatEventDateShort(event.date)} at {formatTime(event.time)}
-            </Text>
-          </View>
+              <View style={styles.metaRow}>
+                <Clock size={14} color={Colors.goldWarm} />
+                <Text style={styles.time}>
+                  {formatEventDateShort(event.date)} at {formatTime(event.time)}
+                </Text>
+              </View>
 
-          <Text style={styles.description} numberOfLines={3}>
-            {event.description}
-          </Text>
+              <Text style={styles.description} numberOfLines={3}>
+                {event.description}
+              </Text>
 
-          <Pressable onPress={handleViewDetails} style={styles.detailButton}>
-            <LinearGradient
-              colors={['#D4AF37', '#B8942E']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.detailButtonGradient}
-            >
-              <Text style={styles.detailButtonText}>View Full Details</Text>
-              <ChevronRight size={16} color={Colors.midnight} />
-            </LinearGradient>
+              <Pressable onPress={handleViewDetails} style={styles.detailButton}>
+                <LinearGradient
+                  colors={['#D4AF37', '#B8942E']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.detailButtonGradient}
+                >
+                  <Text style={styles.detailButtonText}>View Full Details</Text>
+                  <ChevronRight size={16} color={Colors.midnight} />
+                </LinearGradient>
+              </Pressable>
+            </View>
           </Pressable>
-        </View>
-      </BottomSheet>
+        </Pressable>
+      </Modal>
     );
   }
 );
@@ -134,18 +120,27 @@ EventDetailBottomSheet.displayName = 'EventDetailBottomSheet';
 export default EventDetailBottomSheet;
 
 const styles = StyleSheet.create({
-  background: {
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
     backgroundColor: Colors.midnightCard,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
+    minHeight: 300,
   },
-  handleIndicator: {
-    backgroundColor: Colors.goldWarm,
+  handleBar: {
     width: 40,
     height: 4,
+    backgroundColor: Colors.goldWarm,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 8,
   },
   content: {
-    flex: 1,
     padding: 20,
     paddingTop: 8,
     gap: 12,
@@ -185,7 +180,7 @@ const styles = StyleSheet.create({
   liveText: {
     color: Colors.crimson,
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '700' as const,
     letterSpacing: 1,
   },
   title: {
@@ -203,7 +198,7 @@ const styles = StyleSheet.create({
   location: {
     color: Colors.gold,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '600' as const,
   },
   locationDetail: {
     color: Colors.whiteMuted,
@@ -224,7 +219,7 @@ const styles = StyleSheet.create({
   detailButton: {
     borderRadius: 24,
     overflow: 'hidden',
-    marginTop: 'auto',
+    marginTop: 12,
     shadowColor: Colors.gold,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
