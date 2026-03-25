@@ -1,26 +1,36 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Navigation } from 'lucide-react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import Colors from '@/constants/colors';
+import { Fonts } from '@/constants/typography';
 import { usePopeEvents } from '@/contexts/PopeEventsContext';
-import LiveStatus from '@/components/LiveStatus';
+import LiveStatusHero from '@/components/LiveStatusHero';
 import Countdown from '@/components/Countdown';
 import EventCard from '@/components/EventCard';
-import NewsTicker from '@/components/NewsTicker';
+import TimelineEventCard from '@/components/TimelineEventCard';
+import GoldTicker from '@/components/GoldTicker';
 import PapalCrest from '@/components/PapalCrest';
 import GoldSpinner from '@/components/GoldSpinner';
 import GoldParticles from '@/components/GoldParticles';
 import PremiumTeaser from '@/components/PremiumTeaser';
 import * as Haptics from 'expo-haptics';
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { currentEvent, nextEvent, todaysEvents, upcomingEvents, isLoading, refetch } = usePopeEvents();
   const [refreshing, setRefreshing] = React.useState(false);
+  const fabScale = useSharedValue(1);
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -32,6 +42,18 @@ export default function HomeScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push('/(tabs)/map' as any);
   };
+
+  const handleFabPressIn = () => {
+    fabScale.value = withSpring(0.9, { damping: 15, stiffness: 300 });
+  };
+
+  const handleFabPressOut = () => {
+    fabScale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  };
+
+  const fabAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: fabScale.value }],
+  }));
 
   if (isLoading) {
     return (
@@ -48,7 +70,7 @@ export default function HomeScreen() {
       <GoldParticles />
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 12 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 12, paddingBottom: 100 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -74,26 +96,9 @@ export default function HomeScreen() {
           />
         </View>
 
-        <NewsTicker />
-
         <View style={styles.section}>
-          <LiveStatus event={currentEvent} />
+          <LiveStatusHero event={currentEvent} />
         </View>
-
-        <Pressable style={styles.findPopeButton} onPress={handleFindPope}>
-          <LinearGradient
-            colors={['rgba(212, 175, 55, 0.12)', 'rgba(212, 175, 55, 0.04)']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.findPopeGradient}
-          >
-            <View style={styles.findPopeIconWrap}>
-              <Navigation size={16} color={Colors.gold} />
-            </View>
-            <Text style={styles.findPopeText}>Where is the Pope now?</Text>
-            <Text style={styles.findPopeArrow}>→</Text>
-          </LinearGradient>
-        </Pressable>
 
         {nextEvent && (
           <View style={styles.section}>
@@ -115,7 +120,12 @@ export default function HomeScreen() {
             </View>
             <View style={styles.eventsList}>
               {todaysEvents.map((event, index) => (
-                <EventCard key={event.id} event={event} isTimeline={index < todaysEvents.length - 1} />
+                <TimelineEventCard
+                  key={event.id}
+                  event={event}
+                  index={index}
+                  isLast={index === todaysEvents.length - 1}
+                />
               ))}
             </View>
           </View>
@@ -142,6 +152,8 @@ export default function HomeScreen() {
           <PremiumTeaser />
         </View>
 
+        <GoldTicker />
+
         <View style={styles.footer}>
           <LinearGradient
             colors={['rgba(212, 175, 55, 0.15)', 'rgba(212, 175, 55, 0)']}
@@ -154,6 +166,20 @@ export default function HomeScreen() {
           <Text style={styles.footerLink}>vatican.va</Text>
         </View>
       </ScrollView>
+
+      <AnimatedPressable
+        style={[styles.fab, fabAnimatedStyle, { bottom: insets.bottom + 90 }]}
+        onPress={handleFindPope}
+        onPressIn={handleFabPressIn}
+        onPressOut={handleFabPressOut}
+      >
+        <LinearGradient
+          colors={['#D4AF37', '#B8942E']}
+          style={styles.fabGradient}
+        >
+          <Navigation size={22} color={Colors.midnight} />
+        </LinearGradient>
+      </AnimatedPressable>
     </View>
   );
 }
@@ -196,9 +222,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   heroTitle: {
+    fontFamily: Fonts.heading.bold,
     color: Colors.goldLight,
     fontSize: 32,
-    fontWeight: '700' as const,
     letterSpacing: -1,
   },
   heroSubtitle: {
@@ -228,9 +254,9 @@ const styles = StyleSheet.create({
     borderRadius: 1.5,
   },
   sectionTitle: {
+    fontFamily: Fonts.heading.bold,
     color: Colors.whiteSecondary,
     fontSize: 20,
-    fontWeight: '700' as const,
     letterSpacing: -0.4,
     flex: 1,
   },
@@ -249,39 +275,6 @@ const styles = StyleSheet.create({
   },
   eventsList: {
     gap: 10,
-  },
-  findPopeButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.15)',
-  },
-  findPopeGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 12,
-  },
-  findPopeIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  findPopeText: {
-    color: Colors.goldLight,
-    fontSize: 14,
-    fontWeight: '600' as const,
-    flex: 1,
-    letterSpacing: -0.1,
-  },
-  findPopeArrow: {
-    color: Colors.goldWarm,
-    fontSize: 18,
-    fontWeight: '300' as const,
   },
   footer: {
     alignItems: 'center',
@@ -310,5 +303,24 @@ const styles = StyleSheet.create({
     fontWeight: '500' as const,
     letterSpacing: 0.3,
     opacity: 0.7,
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    shadowColor: Colors.gold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  fabGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

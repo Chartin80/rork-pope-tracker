@@ -2,7 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect } from 'react';
+import * as Font from 'expo-font';
+import React, { useEffect, useState, useCallback } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PopeEventsProvider } from '@/contexts/PopeEventsContext';
 import Colors from '@/constants/colors';
@@ -34,9 +35,39 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
   useEffect(() => {
-    SplashScreen.hideAsync();
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          'PlayfairDisplay-Regular': require('../assets/fonts/PlayfairDisplay-Regular.ttf'),
+          'PlayfairDisplay-Bold': require('../assets/fonts/PlayfairDisplay-Bold.ttf'),
+        });
+        setFontsLoaded(true);
+      } catch (error) {
+        console.error('Error loading fonts:', error);
+        setFontsLoaded(true);
+      }
+    }
+    loadFonts();
   }, []);
+
+  const onLayoutRootView = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      onLayoutRootView();
+    }
+  }, [fontsLoaded, onLayoutRootView]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

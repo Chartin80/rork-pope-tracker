@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import React from 'react';
 import Colors from '@/constants/colors';
 
-export default function SearchLayout() {
+export default function PremiumLayout() {
   return (
     <Stack
       screenOptions={{

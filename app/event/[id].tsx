@@ -4,7 +4,9 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, MapPin, Clock, Share2, ExternalLink, CalendarPlus } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { FadeInDown, FadeIn, SlideInUp } from 'react-native-reanimated';
 import Colors from '@/constants/colors';
+import { Fonts } from '@/constants/typography';
 import { usePopeEvents } from '@/contexts/PopeEventsContext';
 import CategoryBadge from '@/components/CategoryBadge';
 import { formatEventDate, formatTime } from '@/lib/utils';
@@ -93,11 +95,21 @@ export default function EventDetailScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <CategoryBadge category={event.category} />
+        <Animated.View entering={FadeIn.delay(100).duration(400)}>
+          <CategoryBadge category={event.category} />
+        </Animated.View>
 
-        <Text style={styles.title}>{event.title}</Text>
+        <Animated.Text
+          entering={FadeInDown.delay(150).duration(500).springify()}
+          style={styles.title}
+        >
+          {event.title}
+        </Animated.Text>
 
-        <View style={styles.metaCardOuter}>
+        <Animated.View
+          entering={FadeInDown.delay(200).duration(500).springify()}
+          style={styles.metaCardOuter}
+        >
           <LinearGradient
             colors={['rgba(17, 24, 39, 0.95)', 'rgba(10, 15, 28, 0.98)']}
             style={styles.metaCard}
@@ -130,9 +142,12 @@ export default function EventDetailScreen() {
               </View>
             </View>
           </LinearGradient>
-        </View>
+        </Animated.View>
 
-        <View style={styles.actionsRow}>
+        <Animated.View
+          entering={FadeInDown.delay(250).duration(500).springify()}
+          style={styles.actionsRow}
+        >
           <Pressable
             style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
             onPress={handleMapsLink}
@@ -154,9 +169,12 @@ export default function EventDetailScreen() {
             <Share2 size={15} color={Colors.gold} />
             <Text style={styles.actionText}>Share</Text>
           </Pressable>
-        </View>
+        </Animated.View>
 
-        <View style={styles.descriptionSection}>
+        <Animated.View
+          entering={FadeInDown.delay(300).duration(500).springify()}
+          style={styles.descriptionSection}
+        >
           <Text style={styles.descriptionLabel}>About this event</Text>
           <View style={styles.descriptionOuter}>
             <LinearGradient
@@ -169,7 +187,7 @@ export default function EventDetailScreen() {
               </Text>
             </LinearGradient>
           </View>
-        </View>
+        </Animated.View>
 
         {event.isLive && (
           <LinearGradient
@@ -230,11 +248,11 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   title: {
+    fontFamily: Fonts.heading.bold,
     color: Colors.white,
     fontSize: 30,
-    fontWeight: '700' as const,
     letterSpacing: -0.8,
-    lineHeight: 36,
+    lineHeight: 38,
   },
   metaCardOuter: {
     borderRadius: 22,
@@ -312,9 +330,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   descriptionLabel: {
+    fontFamily: Fonts.heading.bold,
     color: Colors.whiteSecondary,
     fontSize: 20,
-    fontWeight: '700' as const,
     letterSpacing: -0.3,
   },
   descriptionOuter: {
@@ -332,10 +350,10 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   dropCap: {
+    fontFamily: Fonts.heading.bold,
     color: Colors.goldLight,
-    fontSize: 36,
-    fontWeight: '700' as const,
-    lineHeight: 40,
+    fontSize: 48,
+    lineHeight: 52,
   },
   liveBanner: {
     flexDirection: 'row',

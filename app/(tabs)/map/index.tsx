@@ -1,15 +1,19 @@
-import React, { useMemo, useCallback, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, ScrollView, Animated } from 'react-native';
+import React, { useMemo, useCallback, useState, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Navigation, MapPin, X, Globe, ChevronRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Colors from '@/constants/colors';
+import { Fonts } from '@/constants/typography';
 import { usePopeEvents } from '@/contexts/PopeEventsContext';
 import { PopeEvent } from '@/types';
 import { formatTime, formatEventDateShort } from '@/lib/utils';
 import { getCategoryColor } from '@/lib/locations';
 import CategoryBadge from '@/components/CategoryBadge';
 import GoldParticles from '@/components/GoldParticles';
+import CustomMapMarker from '@/components/CustomMapMarker';
+import EventDetailBottomSheet, { EventDetailBottomSheetRef } from '@/components/EventDetailBottomSheet';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 
@@ -18,6 +22,7 @@ export default function MapScreen() {
   const router = useRouter();
   const { events, currentEvent } = usePopeEvents();
   const [selectedEvent, setSelectedEvent] = useState<PopeEvent | null>(null);
+  const bottomSheetRef = useRef<EventDetailBottomSheetRef>(null);
 
   const uniqueLocations = useMemo(() => {
     const seen = new Map<string, PopeEvent>();
@@ -40,6 +45,11 @@ export default function MapScreen() {
   const handleEventSelect = useCallback((event: PopeEvent) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedEvent(event);
+    bottomSheetRef.current?.expand();
+  }, []);
+
+  const handleCloseBottomSheet = useCallback(() => {
+    setSelectedEvent(null);
   }, []);
 
   const handleEventDetail = useCallback((event: PopeEvent) => {
@@ -145,7 +155,7 @@ export default function MapScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       <MapViewComponent
         style={StyleSheet.absoluteFillObject}
         initialRegion={{
@@ -154,17 +164,19 @@ export default function MapScreen() {
           latitudeDelta: 0.5,
           longitudeDelta: 0.5,
         }}
-        customMapStyle={darkMapStyle}
+        customMapStyle={enhancedDarkMapStyle}
       >
         {uniqueLocations.map(event => (
           <MarkerComponent
             key={event.id}
             coordinate={{ latitude: event.latitude, longitude: event.longitude }}
-            title={event.title}
-            description={event.location}
             onPress={() => handleEventSelect(event)}
-            pinColor={currentEvent?.id === event.id ? Colors.gold : Colors.crimson}
-          />
+          >
+            <CustomMapMarker
+              isCurrent={currentEvent?.id === event.id}
+              color={getCategoryColor(event.category)}
+            />
+          </MarkerComponent>
         ))}
       </MapViewComponent>
 
@@ -178,30 +190,8 @@ export default function MapScreen() {
         </LinearGradient>
       </View>
 
-      {selectedEvent && (
-        <View style={[styles.selectedCard, { bottom: insets.bottom + 24 }]}>
-          <LinearGradient
-            colors={['rgba(17, 24, 39, 0.98)', 'rgba(10, 15, 28, 0.99)']}
-            style={styles.selectedCardGradient}
-          >
-            <Pressable style={styles.closeButton} onPress={() => setSelectedEvent(null)}>
-              <X size={14} color={Colors.whiteMuted} />
-            </Pressable>
-            <CategoryBadge category={selectedEvent.category} compact />
-            <Text style={styles.selectedTitle}>{selectedEvent.title}</Text>
-            <View style={styles.selectedMeta}>
-              <MapPin size={12} color={Colors.gold} />
-              <Text style={styles.selectedLocation}>{selectedEvent.location}</Text>
-            </View>
-            <Text style={styles.selectedTime}>
-              {formatEventDateShort(selectedEvent.date)} at {formatTime(selectedEvent.time)}
-            </Text>
-          </LinearGradient>
-        </View>
-      )}
-
       <Pressable
-        style={[styles.locateButton, { bottom: selectedEvent ? 200 : insets.bottom + 24 }]}
+        style={[styles.locateButton, { bottom: insets.bottom + 24 }]}
         onPress={handleLocatePress}
       >
         <LinearGradient
@@ -214,16 +204,28 @@ export default function MapScreen() {
           <Text style={styles.locateText}>Find the Pope</Text>
         </LinearGradient>
       </Pressable>
-    </View>
+
+      <EventDetailBottomSheet
+        ref={bottomSheetRef}
+        event={selectedEvent}
+        onClose={handleCloseBottomSheet}
+      />
+    </GestureHandlerRootView>
   );
 }
 
-const darkMapStyle = [
-  { elementType: 'geometry', stylers: [{ color: '#1d2c4d' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#8ec3b9' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#1a3646' }] },
-  { featureType: 'water', elementType: 'geometry.fill', stylers: [{ color: '#0e1626' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#304a7d' }] },
+const enhancedDarkMapStyle = [
+  { elementType: 'geometry', stylers: [{ color: '#0A0F1C' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#D4AF37' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0A0F1C' }] },
+  { featureType: 'water', elementType: 'geometry.fill', stylers: [{ color: '#060A14' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1E2A45' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#C5A26F' }] },
+  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#E8CC6E' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#111827' }] },
+  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#162038' }] },
+  { featureType: 'administrative', elementType: 'labels.text.fill', stylers: [{ color: '#D4AF37' }] },
+  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#E8CC6E' }] },
 ];
 
 const styles = StyleSheet.create({
@@ -251,9 +253,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
+    fontFamily: Fonts.heading.bold,
     color: Colors.goldLight,
     fontSize: 26,
-    fontWeight: '700' as const,
     letterSpacing: -0.5,
   },
   headerSubtitle: {
@@ -366,60 +368,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(212, 175, 55, 0.12)',
   },
   mapTitle: {
+    fontFamily: Fonts.heading.bold,
     color: Colors.gold,
     fontSize: 16,
-    fontWeight: '700' as const,
-  },
-  selectedCard: {
-    position: 'absolute',
-    left: 20,
-    right: 20,
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.2)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  selectedCardGradient: {
-    padding: 20,
-    gap: 8,
-  },
-  closeButton: {
-    position: 'absolute',
-    right: 14,
-    top: 14,
-    zIndex: 1,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(30, 42, 69, 0.8)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  selectedTitle: {
-    color: Colors.white,
-    fontSize: 18,
-    fontWeight: '600' as const,
-    letterSpacing: -0.3,
-    paddingRight: 30,
-  },
-  selectedMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  selectedLocation: {
-    color: Colors.gold,
-    fontSize: 14,
-    fontWeight: '500' as const,
-  },
-  selectedTime: {
-    color: Colors.whiteMuted,
-    fontSize: 13,
   },
   locateButton: {
     position: 'absolute',

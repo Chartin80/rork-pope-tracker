@@ -1,23 +1,64 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday as isDayToday } from 'date-fns';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  withSpring,
+  Easing,
+  FadeIn,
+  SlideInRight,
+  SlideInLeft,
+} from 'react-native-reanimated';
 import Colors from '@/constants/colors';
+import { Fonts } from '@/constants/typography';
 import { usePopeEvents } from '@/contexts/PopeEventsContext';
 import EventCard from '@/components/EventCard';
 import GoldParticles from '@/components/GoldParticles';
 import { getEventsForDate } from '@/lib/utils';
 import * as Haptics from 'expo-haptics';
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+function EventDotPulse({ hasEvents, inMonth }: { hasEvents: boolean; inMonth: boolean }) {
+  const pulseOpacity = useSharedValue(0.6);
+
+  useEffect(() => {
+    if (hasEvents && inMonth) {
+      pulseOpacity.value = withRepeat(
+        withSequence(
+          withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.6, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        false
+      );
+    }
+  }, [hasEvents, inMonth]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value,
+  }));
+
+  if (!hasEvents || !inMonth) return null;
+
+  return <Animated.View style={[styles.eventDot, animatedStyle]} />;
+}
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
   const { events } = usePopeEvents();
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [direction, setDirection] = useState<'left' | 'right'>('right');
 
   const selectedDateStr = useMemo(() => format(selectedDate, 'yyyy-MM-dd'), [selectedDate]);
   const selectedEvents = useMemo(() => getEventsForDate(events, selectedDateStr), [events, selectedDateStr]);
@@ -38,11 +79,13 @@ export default function CalendarScreen() {
 
   const goToPrevMonth = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setDirection('left');
     setCurrentMonth(prev => subMonths(prev, 1));
   }, []);
 
   const goToNextMonth = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setDirection('right');
     setCurrentMonth(prev => addMonths(prev, 1));
   }, []);
 
@@ -76,7 +119,13 @@ export default function CalendarScreen() {
               <Pressable onPress={goToPrevMonth} style={styles.navButton}>
                 <ChevronLeft size={18} color={Colors.gold} />
               </Pressable>
-              <Text style={styles.monthLabel}>{format(currentMonth, 'MMMM yyyy')}</Text>
+              <Animated.Text
+                key={format(currentMonth, 'yyyy-MM')}
+                entering={direction === 'right' ? SlideInRight.duration(300) : SlideInLeft.duration(300)}
+                style={styles.monthLabel}
+              >
+                {format(currentMonth, 'MMMM yyyy')}
+              </Animated.Text>
               <Pressable onPress={goToNextMonth} style={styles.navButton}>
                 <ChevronRight size={18} color={Colors.gold} />
               </Pressable>
@@ -128,8 +177,8 @@ export default function CalendarScreen() {
                         {format(day, 'd')}
                       </Text>
                     )}
-                    {hasEvents && inMonth && !isSelected && (
-                      <View style={styles.eventDot} />
+                    {!isSelected && (
+                      <EventDotPulse hasEvents={hasEvents} inMonth={inMonth} />
                     )}
                     {hasEvents && inMonth && isSelected && (
                       <View style={styles.eventDotSelected} />
@@ -198,9 +247,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pageTitle: {
+    fontFamily: Fonts.heading.bold,
     color: Colors.goldLight,
     fontSize: 26,
-    fontWeight: '700' as const,
     letterSpacing: -0.5,
   },
   pageSubtitle: {
@@ -236,9 +285,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   monthLabel: {
+    fontFamily: Fonts.heading.bold,
     color: Colors.white,
     fontSize: 17,
-    fontWeight: '600' as const,
     letterSpacing: -0.3,
   },
   weekdayRow: {
@@ -327,9 +376,9 @@ const styles = StyleSheet.create({
     borderRadius: 1.5,
   },
   eventsDateLabel: {
+    fontFamily: Fonts.heading.bold,
     color: Colors.whiteSecondary,
     fontSize: 18,
-    fontWeight: '700' as const,
     letterSpacing: -0.3,
   },
   noEvents: {

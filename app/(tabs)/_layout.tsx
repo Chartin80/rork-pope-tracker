@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
-import { Home, Globe, CalendarDays, Search } from 'lucide-react-native';
+import { Home, Globe, CalendarDays, Heart } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 
@@ -12,7 +12,7 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: Colors.midnightDeep,
-          borderTopColor: 'rgba(212, 175, 55, 0.08)',
+          borderTopColor: 'rgba(212, 175, 55, 0.15)',
           borderTopWidth: StyleSheet.hairlineWidth,
           height: Platform.OS === 'ios' ? 88 : 64,
           paddingTop: 8,
@@ -53,10 +53,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="premium"
         options={{
-          title: 'Search',
-          tabBarIcon: ({ color, size }) => <Search size={size - 2} color={color} strokeWidth={1.8} />,
+          title: 'Premium',
+          tabBarIcon: ({ color, size }) => <Heart size={size - 2} color={color} strokeWidth={1.8} />,
         }}
       />
     </Tabs>

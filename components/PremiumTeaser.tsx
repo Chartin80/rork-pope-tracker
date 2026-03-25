@@ -1,8 +1,19 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, Animated, Easing } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Crown, Bell, Archive, Palette, Users, Sparkles } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  withSpring,
+  Easing,
+} from 'react-native-reanimated';
 import Colors from '@/constants/colors';
+import { Fonts } from '@/constants/typography';
 import * as Haptics from 'expo-haptics';
 
 const FEATURES = [
@@ -12,61 +23,47 @@ const FEATURES = [
   { icon: Users, label: 'Family sharing (up to 6)' },
 ];
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 export default function PremiumTeaser() {
-  const shimmerAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const router = useRouter();
+  const shimmerOpacity = useSharedValue(0);
+  const scale = useSharedValue(1);
 
   useEffect(() => {
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmerAnim, {
-          toValue: 1,
-          duration: 2500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-        Animated.timing(shimmerAnim, {
-          toValue: 0,
-          duration: 2500,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
-        }),
-      ])
+    shimmerOpacity.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 2500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 2500, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      false
     );
-    anim.start();
-    return () => anim.stop();
-  }, [shimmerAnim]);
+  }, []);
 
   const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.97,
-      useNativeDriver: true,
-      speed: 50,
-      bounciness: 4,
-    }).start();
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
   };
 
   const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 50,
-      bounciness: 4,
-    }).start();
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
   };
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    console.log('Premium teaser pressed');
+    router.push('/(tabs)/premium' as any);
   };
 
-  const borderOpacity = shimmerAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.15, 0.4],
-  });
+  const shimmerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: shimmerOpacity.value,
+  }));
+
+  const scaleAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   return (
-    <Animated.View style={[styles.outer, { transform: [{ scale: scaleAnim }] }]}>
+    <Animated.View style={[styles.outer, scaleAnimatedStyle]}>
       <View style={styles.cardContainer}>
         <LinearGradient
           colors={['rgba(212, 175, 55, 0.08)', 'rgba(212, 175, 55, 0.02)', 'rgba(10, 15, 28, 0.95)']}
@@ -84,7 +81,7 @@ export default function PremiumTeaser() {
               <Text style={styles.title}>Pope Tracker Premium</Text>
               <Text style={styles.price}>$2.99/year</Text>
             </View>
-            <Animated.View style={{ opacity: shimmerAnim }}>
+            <Animated.View style={shimmerAnimatedStyle}>
               <Sparkles size={18} color={Colors.goldWarm} />
             </Animated.View>
           </View>
@@ -100,7 +97,7 @@ export default function PremiumTeaser() {
             ))}
           </View>
 
-          <Pressable
+          <AnimatedPressable
             onPress={handlePress}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
@@ -115,7 +112,7 @@ export default function PremiumTeaser() {
               <Crown size={14} color={Colors.midnight} />
               <Text style={styles.buttonText}>Unlock Premium</Text>
             </LinearGradient>
-          </Pressable>
+          </AnimatedPressable>
         </LinearGradient>
       </View>
     </Animated.View>
@@ -157,15 +154,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
+    fontFamily: Fonts.heading.bold,
     color: Colors.goldLight,
     fontSize: 17,
-    fontWeight: '700' as const,
     letterSpacing: -0.3,
   },
   price: {
     color: Colors.goldWarm,
     fontSize: 13,
-    fontWeight: '500' as const,
+    fontWeight: '500',
     marginTop: 2,
   },
   features: {
@@ -190,7 +187,7 @@ const styles = StyleSheet.create({
   featureText: {
     color: Colors.whiteMuted,
     fontSize: 13,
-    fontWeight: '400' as const,
+    fontWeight: '400',
     flex: 1,
   },
   buttonWrap: {
@@ -205,9 +202,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   buttonText: {
+    fontFamily: Fonts.heading.bold,
     color: Colors.midnight,
     fontSize: 15,
-    fontWeight: '700' as const,
     letterSpacing: 0.3,
   },
 });
