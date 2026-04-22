@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PopeEventsProvider } from '@/contexts/PopeEventsContext';
 import Colors from '@/constants/colors';
 
@@ -100,12 +101,14 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <PopeEventsProvider>
-          <GestureHandlerRootView style={{ flex: 1 }}>
-            <StatusBar style="light" />
-            <RootLayoutNav />
-          </GestureHandlerRootView>
-        </PopeEventsProvider>
+        <SafeAreaProvider>
+          <PopeEventsProvider>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+              <StatusBar style="light" />
+              <RootLayoutNav />
+            </GestureHandlerRootView>
+          </PopeEventsProvider>
+        </SafeAreaProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
