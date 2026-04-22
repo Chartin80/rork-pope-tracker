@@ -13,6 +13,8 @@ SplashScreen.preventAutoHideAsync().catch(() => {
   console.log('SplashScreen.preventAutoHideAsync failed');
 });
 
+console.log('[PopeTracker] App bootstrap');
+
 const queryClient = new QueryClient();
 
 class ErrorBoundary extends React.Component<
