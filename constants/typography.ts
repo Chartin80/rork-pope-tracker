@@ -3,14 +3,14 @@ import { Platform } from 'react-native';
 export const Fonts = {
   heading: {
     regular: Platform.select({
-      ios: 'PlayfairDisplay-Regular',
-      android: 'PlayfairDisplay-Regular',
-      web: 'Playfair Display, serif',
+      ios: 'Georgia',
+      android: 'serif',
+      web: 'Georgia, "Times New Roman", serif',
     }) as string,
     bold: Platform.select({
-      ios: 'PlayfairDisplay-Bold',
-      android: 'PlayfairDisplay-Bold',
-      web: 'Playfair Display, serif',
+      ios: 'Georgia-Bold',
+      android: 'serif',
+      web: 'Georgia, "Times New Roman", serif',
     }) as string,
   },
   body: {
