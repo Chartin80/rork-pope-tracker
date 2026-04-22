@@ -13,7 +13,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {
   console.log('SplashScreen.preventAutoHideAsync failed');
 });
 
-console.log('[PopeTracker] App bootstrap');
+console.log('[PopeTracker] App bootstrap', new Date().toISOString());
 
 const queryClient = new QueryClient();
 
